@@ -1,0 +1,6 @@
+!a program written in the banana language
+bello
+minion bob : banana
+minion kevin : gelato ! another comment
+minion stuart : bapple
+! comment
