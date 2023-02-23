@@ -166,6 +166,7 @@ Token GetToken()
     else if(IsAllowedSymbol(c))
     {
         t.lex[0] = c;
+        t.lex[1] = '\0';
         t.t = sym;
         return t;
     }
@@ -174,6 +175,7 @@ Token GetToken()
     else
     {
         t.lex[0] = c;
+        t.lex[1] = '\0';
         t.t = err;
         return t;
     }
@@ -188,9 +190,12 @@ int main()
 	Init();
     Token t;
 
-    // read in as many tokens as needed:
-    for (int i = 0; i < 12; i++){
-        t = GetToken();
+    t = GetToken();
+
+    // keep reading in tokens until end of file
+    while(strcmp(t.lex, "EOF") != 0){
         printf("%s\n", t.lex);
+        t = GetToken();
     }
+
 }
