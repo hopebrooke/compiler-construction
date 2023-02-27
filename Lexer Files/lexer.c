@@ -31,6 +31,7 @@ Date Work Commenced: 20/02
 // VARIABLES AND DECLARATIONS
 //***********************************
 FILE* file;
+int lineNum;    // Current line number
 Token peeked;       // Token that has been peeked at but not consumed
 char fileName[32];  // Filename
 const char * KeyWords[21] = { "class", "constructor", "method", "function", "int", "boolean", "char", "void",
@@ -96,6 +97,9 @@ int InitLexer (char* file_name)
   // Set Peeked line number to -1 to start with
   peeked.ln = -1;
 
+  // Set file line number to 1
+  lineNum = 1;
+
   // Set global filename
   strcpy(fileName, file_name);
 
@@ -111,6 +115,7 @@ Token GetNextToken ()
   Token t;
   // Token default type is error
   t.tp = ERR;
+  t.ln = 1;
   // Set token filename
   strcpy(t.fl, fileName);
   // Create temporary lexeme to store characters read in
@@ -120,6 +125,9 @@ Token GetNextToken ()
   if( peeked.ln != -1 )
   { // Return that token if there is
     t = peeked;
+
+    // Set temporary token line number to -1
+    peeked.ln = -1;
     return t;
   }
 
@@ -132,8 +140,13 @@ Token GetNextToken ()
   //_________WHITESPACE_________
   // Consume leading white space
   while( isspace(c) )
-    c = getc(file);
+  {
+    // Check if any whitespace is new line:
+    if( c == '\n')
+      lineNum ++;
 
+    c = getc(file);
+  }
 
   //_________COMMENTS_________
   // Create string array to store comment line if needed
@@ -150,14 +163,15 @@ Token GetNextToken ()
       if( c == '/')
       {
         fgets(line, sizeof(line), file);
+        // Add to the line number
+        lineNum ++;
         c = getc(file);
       }
     
       // If '/*' check for end of comment - '*/'
       else if( c == '*' )
       {
-        // Ignore next character as API doc comments can start with '/**'
-        c = getc(file);
+
         int nextc;
         nextc = getc(file);
         bool commentLeft = true;
@@ -167,6 +181,19 @@ Token GetNextToken ()
         {
           c = nextc;
           nextc = getc(file);
+          // Continually check for new line character
+          if( c == '\n' )
+            lineNum ++;
+          // Continually check for end of file character
+          if( c == -1 )
+          {
+            // Set error token values and return
+            t.tp = ERR;
+            strcpy(t.lx, "Error: unexpected eof in comment");
+            t.ec = EofInCom;
+            t.ln = lineNum;
+            return t;
+          }
           // 'c' and 'nextc' contain two most recent characters, check if they are '*/'
           // If end of comment then exit while loop
           if( c == '*' && nextc == '/')
@@ -180,27 +207,34 @@ Token GetNextToken ()
       
       // If not a comment then create '/' symbol token
       else
-      {
-        // Put last character back into input stream
+      {// Put last character back into input stream
         ungetc(c, file);
         // Set and return token for '/' symbol
         t.tp = SYMBOL;
         strcpy(t.lx, "/");
-        printf("still checking for comment?");
-        // Set line number ????
+        t.ln = lineNum;
         return t;
       }
     }
 
 
-    while( isspace(c) ) c = getc(file);
-
+    while( isspace(c) ) {
+      // Check if c is new line char
+      if( c == '\n' )
+        lineNum ++;
+      c = getc(file);
+    }
   }
 
   //_________WHITESPACE-2_________
   // Consume leading white space after comments
-  while( isspace(c) ) c = getc(file);
-
+  while( isspace(c) ) 
+  {
+    // Check for new line character
+    if( c == '\n' )
+      lineNum ++;
+    c = getc(file);
+  }
 
   //_________EOF_________
   // Check for end of file
@@ -223,6 +257,27 @@ Token GetNextToken ()
     // Keep reading into tempLex until another '"' character
     while( c != '"' )
     {
+      // Check for end of file in string:
+      if( c == -1)
+      {
+        // Set error token values and return
+        t.tp = ERR;
+        strcpy(t.lx, "Error: unexpected eof in string constant");
+        t.ec = EofInStr;
+        t.ln = lineNum;
+        return t;
+      }
+      // Check for new line in string
+      if( c == '\n' )
+      {
+        // Set error token values and return
+        t.tp = ERR;
+        strcpy(t.lx, "Error: new line in string constant");
+        t.ec = NewLnInStr;
+        t.ln = lineNum;
+        lineNum++;
+        return t;
+      }
       tempLex[i] = c;
       c = getc(file);
       i ++;
@@ -232,7 +287,7 @@ Token GetNextToken ()
     // Set and return string token
     t.tp = STRING;
     strcpy(t.lx, tempLex);
-    // Set line number?
+    t.ln = lineNum;
     return t;
   }
 
@@ -260,14 +315,14 @@ Token GetNextToken ()
       // Set and return keyword token
       t.tp = RESWORD;
       strcpy(t.lx, tempLex);
-      // Set line num?
+      t.ln = lineNum;
       return t;
     } 
     else {
       // Set and return ID token
       t.tp = ID;
       strcpy(t.lx, tempLex);
-      // Set line num?
+      t.ln = lineNum;
       return t;
 
     }
@@ -294,7 +349,7 @@ Token GetNextToken ()
     // Set and return int token
     t.tp = INT;
     strcpy(t.lx, tempLex);
-    // Set file number?
+    t.ln = lineNum;
     return t;
   }
 
@@ -308,7 +363,7 @@ Token GetNextToken ()
       t.tp = SYMBOL;
       t.lx[0] = c;
       t.lx[1] = '\0';
-      // Set line number?
+      t.ln = lineNum;
       return t;
     }
     else {
@@ -317,7 +372,7 @@ Token GetNextToken ()
       printf(" symbol is %c\n", c);
       strcpy(t.lx, "Error: illegal symbol in source file");
       t.ec = 3;
-      // Set line number
+      t.ln = lineNum;
       return t;
     }
   }
@@ -330,8 +385,13 @@ Token GetNextToken ()
 // peek (look) at the next token in the source file without removing it from the stream
 Token PeekNextToken ()
 {
-  Token t;
-  t.tp = ERR;
+  // First get the next token
+  Token t = GetNextToken();
+
+  // Store the token in temporary token
+  peeked = t;
+
+  // Return the token
   return t;
 }
 
@@ -360,8 +420,9 @@ int main ()
   Token t = GetNextToken();
   while(t.tp != 5)
   {
-    printf("<%s, %d, %s, %s>\n", t.fl, 3, t.lx, TokenString[t.tp]);
+    printf("<%s, %d, %s, %s>\n", t.fl, t.ln, t.lx, TokenString[t.tp]);
     t = GetNextToken();
+   
   }
   
 	return 0;
