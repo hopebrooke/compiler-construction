@@ -116,6 +116,7 @@ Token GetNextToken ()
   // Token default type is error
   t.tp = ERR;
   t.ln = 1;
+  t.ec = NoLexErr;
   // Set token filename
   strcpy(t.fl, fileName);
   // Create temporary lexeme to store characters read in
@@ -330,7 +331,7 @@ Token GetNextToken ()
 
 
   //_________DIGITS_________
-  // Check is first character is a digit
+  // Check if first character is a digit
   else if( isdigit(c) )
   {
     int i = 0;
@@ -408,24 +409,24 @@ int StopLexer ()
 
 // do not remove the next line
 #ifndef TEST
-int main ()
-{
-	// implement your main function here
-  // NOTE: the autograder will not use your main function
+// int main ()
+// {
+// 	// implement your main function here
+//   // NOTE: the autograder will not use your main function
 
-  // Initialise lexer
-  InitLexer("Ball.jack");
+//   // Initialise lexer
+//   InitLexer("Ball.jack");
 
-  // Read all tokens
-  Token t = GetNextToken();
-  while(t.tp != 5)
-  {
-    printf("<%s, %d, %s, %s>\n", t.fl, t.ln, t.lx, TokenString[t.tp]);
-    t = GetNextToken();
+//   // Read all tokens
+//   Token t = GetNextToken();
+//   while(t.tp != 5)
+//   {
+//     printf("<%s, %d, %s, %s>\n", t.fl, t.ln, t.lx, TokenString[t.tp]);
+//     t = GetNextToken();
    
-  }
+//   }
   
-	return 0;
-}
+// 	return 0;
+// }
 // do not remove the next line
 #endif

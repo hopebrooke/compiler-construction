@@ -4,6 +4,8 @@
 #include "lexer.h"
 
 // syntax errors which my be encountered by the parser
+
+
 typedef enum {
 	none,					// no errors
 	lexerErr,				// lexer error (if the lexer returns an error)
