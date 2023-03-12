@@ -1225,7 +1225,7 @@ void returnStatement()
 	if( (t.tp == 3) && (t.lx[0] == ';')){
 		;
 	}
-	else {
+	else if ((t.tp == 0) || (t.tp == 1) || (t.tp == 2) || (t.tp == 4) || ((t.tp == 3)&&(t.lx[0] == '(')) ){
 		expression();
 		if( status.er != 0) return;
 	}
@@ -1245,21 +1245,23 @@ void returnStatement()
 // Function for an expression
 void expression()
 {
+	Token t = PeekNextToken();
 	relationalExpression();
 	if( status.er != 0) return;
 
 	// Check for more relational expressions
-	Token t = PeekNextToken();
+	t = PeekNextToken();
 	int loop = 0;
 
 	if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|') )){
 		loop = 1;
 	}
+
 	while (loop)
 	{
 		// Consume '&' or '|'
 		t = GetNextToken();
-
+		t = PeekNextToken();
 		relationalExpression();
 		
 		if( status.er != 0) return;
@@ -1281,7 +1283,7 @@ void relationalExpression()
 	arithmeticExpression();
 	if( status.er != 0) return;
 
-	// Check for more relational expressions
+	// Check for more arithmetic expressions
 	t = PeekNextToken();
 	int loop = 0;
 
@@ -1313,7 +1315,7 @@ void arithmeticExpression()
 	term();
 	if( status.er != 0) return;
 
-	// Check for more relational expressions
+	// Check for more terms
 	Token t = PeekNextToken();
 	int loop = 0;
 
@@ -1347,7 +1349,7 @@ void term()
 	factor();
 	if( status.er != 0) return;
 
-	// Check for more relational expressions
+	// Check for more factors
 	Token t = PeekNextToken();
 	int loop = 0;
 
@@ -1469,7 +1471,6 @@ void operand()
 	}
 	//_______EXPRESSION________
 	else if( (t.tp == 3) && (t.lx[0] == '(')){
-		printf("%i: open bracket\n", t.ln);
 		expression();
 		if(status.er != 0 ) return;
 		// Check for )
@@ -1480,7 +1481,7 @@ void operand()
 			return;
 		}
 		if( (t.tp == 3) && (t.lx[0] == ')')){
-			printf("%i: closing bracket\n", t.ln);
+			;
 		}
 		else {
 			status.er = closeParenExpected;
@@ -1654,7 +1655,7 @@ int StopParser ()
 #ifndef TEST_PARSER
 int main ()
 {
-	InitLexer("Ball.jack");
+	InitLexer("semicolonExpected.jack");
 
 	ParserInfo popping = Parse();
 
