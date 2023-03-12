@@ -5,8 +5,7 @@
 #include "lexer.h"
 #include "parser.h"
 
-
-// you can declare prototypes of parser functions below
+// Parser Function Declarations
 void memberDeclar();
 void classVarDeclar();
 void type();
@@ -32,149 +31,104 @@ void operand();
 // Initialise global ParserInfo struct
 ParserInfo status;
 
+
 // Function for member declaration checking
 void memberDeclar()
 {
-	// First peek at token to check whether it is a class 
-	// variable declaration or a subroutine declaration
 	Token t = PeekNextToken();
-	// If token is an error set status
-	if( t.tp == 6 )
-	{
+	if(t.tp == 6) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
 
-	//___________CLASSVAR OR SUBROUTINE___________
-	// First check if token is 'static' or 'field' for classVarDeclar
-	if( t.tp == 0 && (!strcmp(t.lx, "static") || !strcmp(t.lx, "field"))){
-		// If it is a classVarDeclar call function
+	//___________ CLASSVAR ___________
+	if(t.tp == 0 && (!strcmp(t.lx, "static") || !strcmp(t.lx, "field"))){
 		classVarDeclar();
-		// If any errors, exit current function
-		if( status.er != 0 )return;
+		if(status.er != 0) return;
 	}
-	// Check if token is 'constructor', 'function' or 'method'
-	else if( t.tp == 0 && (!strcmp(t.lx, "constructor") || !strcmp(t.lx, "function") || !strcmp(t.lx, "method")))
-	{
-		// If it is a subroutineDeclar call function
+	//___________ SUBROUTINE ___________
+	else if(t.tp == 0 && (!strcmp(t.lx, "constructor") || !strcmp(t.lx, "function") || !strcmp(t.lx, "method"))){
 		subroutineDeclar();
-		// If any errors, exit current function
-		if( status.er != 0 ) return;
+		if(status.er != 0) return;
 	}
-	// If not subroutineDeclar or classVarDeclar set errors
+	//___________ ERROR ___________
 	else {
 		status.er = memberDeclarErr;
 		status.tk = t;
 	}
 }
 
-// Function for classVarDeclar
+
+// Function for class variable declaration
 void classVarDeclar() 
 {
-	// Get the next token
 	Token t = GetNextToken();
-	// Return error if lexer error
-	if( t.tp == 6 )
-	{
+	if(t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
 
-	//___________FIELD/STATIC___________
-	// Give error if token is not 'field' or 'static'
-	if( !strcmp(t.lx, "field") || !strcmp(t.lx, "static"))
-	{
-		;
-	}
+	//___________ FIELD/STATIC ___________
+	if(!strcmp(t.lx, "field") || !strcmp(t.lx, "static"));
 	else {
 		status.er = classVarErr;
 		status.tk = t;
 		return;
 	}
 
-	//___________TYPE___________
-	// If no errors, continue and call 'type' function
+	//___________ TYPE ___________
 	type();
-	// Check for errors form this
-	if( status.er != 0) return;
+	if(status.er != 0) return;
 
-	//___________IDENTIFIER___________
-	// Get next token
+	//___________ IDENTIFIER ___________
 	t = GetNextToken();
-	// Check for lexer error
-	if( t.tp == 6 )
-	{
+	if(t.tp == 6) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	// Check token is identifier
-	if( t.tp == 1 ){
-		;
-	}
+	if(t.tp == 1);
 	else {
 		status.er = idExpected;
 		status.tk = t;
 		return;
 	}
 
-	//_______{, IDENTIFIER}________
-	// First check if next token is a comma
+	//_______ {, IDENTIFIER} ________
 	t = PeekNextToken();
 	int loop = 0;
-	if( (t.tp == 3) && (t.lx[0] == ',')){
-		loop = 1;
-	}
-	// Write loop to keep checking for comma + identifier
-	while( loop )
-	{
-		// Discard comma and get token after
+	if((t.tp == 3) && (t.lx[0] == ',')) loop = 1;
+	while(loop) {
+		// Discard comma
 		t = GetNextToken();
-
 		t = GetNextToken();
-		// Check for lexer errors
-		if( t.tp == 6 )
-		{
+		if(t.tp == 6){
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
-		// If no errors, check it's an identifier
-		if( t.tp == 1 ){
-			;
-		}
+		if(t.tp == 1);
 		else {
 			status.er = idExpected;
 			status.tk = t;
 			return;
 		}
-
-		// Check next token for a comma
+		// Check for another comma
 		t = PeekNextToken();
-		if( (t.tp == 3 ) && (t.lx[0] == ',')){
-			;
-		}
-		else {
-			loop = 0;
-		}
+		if((t.tp == 3) && (t.lx[0] == ','));
+		else loop = 0;
 	}
 
-	//_______;________
-	// Get the next token
+	//_______ ; ________
 	t = GetNextToken();
-	// Check for lexer errors
-	if( t.tp == 6 )
-	{
+	if(t.tp == 6) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	// If no errors, check it's a semi colon
-	if( (t.tp == 3) && (t.lx[0] == ';') ){
-		;
-	}
+	if((t.tp == 3) && (t.lx[0] == ';'));
 	else {
 		status.er = semicolonExpected;
 		status.tk = t;
@@ -183,33 +137,21 @@ void classVarDeclar()
 }
 
 
-//Function for type
-void type() {
-	// Get the next token
+// Function for type
+void type() 
+{
 	Token t = GetNextToken();
-	// Check for lexer errors
-	if( t.tp == 6 )
-	{
+	if(t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
 
-	// Check that token is either int, char, boolean or an identifier
-	if( t.tp == 1)
-	{
-		// Pass if identifier
-		;
-	}
+	//_______INT/CHAR/BOOL/ID_______
+	if(t.tp == 1);
 	else if ((t.tp == 0) &&(	!strcmp(t.lx, "int") ||
-								!strcmp(t.lx, "char") ||
-								!strcmp(t.lx, "boolean")))
-	{
-		// Pass if one of the above reserved words
-		;
-	}
+		!strcmp(t.lx, "char") || !strcmp(t.lx, "boolean")));
 	else {
-		// If not the above, change parser info status error
 		status.er = illegalType;
 		status.tk = t;
 	}
@@ -219,106 +161,75 @@ void type() {
 // Function for subroutineDeclar
 void subroutineDeclar()
 {
-	
-	//___________CONSTRUCTOR/FUNCTION/METHOD___________
-	// Get the next token
+	//___________ CONSTRUCTOR/FUNCTION/METHOD ___________
 	Token t = GetNextToken();
-	// Return error if lexer error
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6 ) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	// Give error if token is not 'constructor', 'function' or 'method'
-	if( !strcmp(t.lx, "constructor") || !strcmp(t.lx, "function") || !strcmp(t.lx, "method"))
-	{
-		;
-	}
+	if( !strcmp(t.lx, "constructor") || !strcmp(t.lx, "function") || !strcmp(t.lx, "method"));
 	else {
 		status.er = subroutineDeclarErr;
 		status.tk = t;
 		return;
 	}
 
-	//______TYPE OR VOID___________
-	// Peek the next token to check if it is a type, or 'void'
+	//______ TYPE OR VOID ___________
 	t = PeekNextToken();
-	// If it is void, continue, if not, call type function
-	if( !(strcmp(t.lx, "void")) )
-	{
-		t = GetNextToken();
-	}
+	if(!(strcmp(t.lx, "void"))) t = GetNextToken();
 	else {
 		type();
-		// If type returns error, exit current function
 		if ( status.er != 0) return;
 	}
 
-	//_______IDENTIFIER_________
+	//_______ IDENTIFIER _________
 	t = GetNextToken();
-	// Return error if lexer error
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6 ) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( t.tp == 1)
-	{
-		;
-	}
+	if( t.tp == 1);
 	else {
 		status.er = idExpected;
 		status.tk = t;
 		return;
 	}
 
-	//_______(__________
+	//_______ ( __________
 	t = GetNextToken();
-	// Return error if lexer error
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6 ) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	// Return error if not an '('
-	if( (t.tp == 3) && (t.lx[0] == '('))
-	{
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '('));
 	else {
 		status.er = openParenExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Call param list function
+	//______ PARAMLIST ______
 	paramList();
 	if( status.er != 0 ) return;
 
-	//_________)_________
+	//_________ ) _________
 	t = GetNextToken();
-	// Return error if lexer error
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6 ){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	// Return error if not an ')'
-	if( (t.tp == 3) && (t.lx[0] == ')'))
-	{
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ')'));
 	else {
 		status.er = closeParenExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Call subroutine body
+	//______ SUBROUTINEBODY ______
 	subroutineBody();
 	if( status.er != 0 ) return;
 }
@@ -327,79 +238,60 @@ void subroutineDeclar()
 // Function for parameter list
 void paramList()
 {
-	// Check if next token is type
 	Token t = PeekNextToken();
-	if( !strcmp(t.lx, "int") || !strcmp(t.lx, "char") || !strcmp(t.lx, "boolean") || (t.tp == 1))
-	{
-		//________TYPE____________
+	if( !strcmp(t.lx, "int") || !strcmp(t.lx, "char") || !strcmp(t.lx, "boolean") || (t.tp == 1)) {
+		
+		//________ TYPE ____________
 		type();
 		if( status.er != 0) return;
 
-		//_______IDENTIFIER________
+		//_______ IDENTIFIER ________
 		t = GetNextToken();
-		if( t.tp == 6 )
-		{
+		if( t.tp == 6 ) {
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
-		if( t.tp == 1 ){
-			;
-		}
+		if( t.tp == 1 );
 		else {
 			status.er = idExpected;
 			status.tk = t;
 			return;
 		}
 
-		//_____,_____
-		// Check if next token is a comma
+		//_________ {, TYPE IDENTIFIER}_________
 		t = PeekNextToken();
 		int loop = 0;
-		if( (t.tp == 3) && (t.lx[0] == ',')){
-			loop = 1;
-		}
-
-		// If next token is comma, keep looping
+		if((t.tp == 3) && (t.lx[0] == ',')) loop = 1;
 		while( loop ){
-			// Consume the comma
 			t = GetNextToken();
-			if( t.tp == 6 )
-			{
+			if( t.tp == 6 ){
 				status.er = lexerErr;
 				status.tk = t;
 				return;
 			}
-			// Check next token is type
+			//______ TYPE ______
 			type();
 			if( status.er != 0) return;
 
-			// Check next token is identifier
+			//______ IDENTIFIER ______
 			t = GetNextToken();
-			if( t.tp == 6 )
-			{
+			if( t.tp == 6 ){
 				status.er = lexerErr;
 				status.tk = t;
 				return;
 			}
-			if( t.tp == 1 ){
-				;
-			}
+			if( t.tp == 1 );
 			else {
 				status.er = idExpected;
 				status.tk = t;
 				return;
 			}
 
-			// Check if next token is comma
+			//______ , ______
 			t = PeekNextToken();
-			// If it is comma continue looping, if not then exit while loop
-			if( (t.tp == 3) && (t.lx[0] == ',')){
-				;
-			}
-			else {
-				loop = 0;
-			}
+			if( (t.tp == 3) && (t.lx[0] == ','));
+			else loop = 0;
 		}
 	}
 	// If no type, then just return to previous function
@@ -407,53 +299,43 @@ void paramList()
 
 
 // Function for subroutine body
-void subroutineBody(){
-	// Check for open curly bracket
+void subroutineBody()
+{
 	Token t = GetNextToken();
 	if( t.tp == 6 ){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] = '{'))
-	{
-		;
-	}
+
+	//______ { ______
+	if( (t.tp == 3) && (t.lx[0] = '{'));
 	else {
 		status.er = openBraceExpected;
 		status.tk = t;
 		return;
 	}
 
-	//Loop for statements
+	//______ STATEMENTS ______
 	int loop = 1;
-	while( loop )
-	{
-		// Check next token
+	while( loop ) {
 		t = PeekNextToken();
 		// All tokens start with a reserved word
-		if( t.tp == 0 )
-		{
+		if( t.tp == 0 ) {
 			statement();
 			if( status.er != 0 ) return;
 		}
-		else {
-			break;
-		}
+		else break;
 	}
 
-	// Check for closing curly bracket
+	//______ } ______
 	t = GetNextToken();
-	// Check for lexer error
 	if( t.tp == 6) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == '}'))
-	{
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '}'));
 	else {
 		status.er = closeBraceExpected;
 		status.tk = t;
@@ -465,43 +347,42 @@ void subroutineBody(){
 // Function to check for statements
 void statement() 
 {
-	// Peek next token to check which statement it is
 	Token t = PeekNextToken();
+	//______ VARDECLAR STATEMENT ______
 	if( (t.tp == 0) && !strcmp(t.lx, "var")){
 		varDeclarStatement();
 		if ( status.er != 0 ) return;
 	}
+	//______ LET STATEMENT ______
 	else if( (t.tp == 0) && !strcmp(t.lx, "let")){
 		letStatement();
 		if ( status.er != 0 ) return;
 	}
+	//______ IF STATEMENT ______
 	else if( (t.tp == 0) && !strcmp(t.lx, "if")){
 		ifStatement();
 		if ( status.er != 0 ) return;
 	}
+	//______ WHILE STATEMENT ______
 	else if( (t.tp == 0) && !strcmp(t.lx, "while")){
 		whileStatement();
 		if ( status.er != 0 ) return;
 	}
+	//______ DO STATEMENT ______
 	else if( (t.tp == 0) && !strcmp(t.lx, "do")){
 		doStatement();
 		if ( status.er != 0 ) return;
 	}
+	//______ RETURN STATEMENT ______
 	else if( (t.tp == 0) && !strcmp(t.lx, "return")){
 		returnStatement();
 		if ( status.er != 0 ) return;
 	}
 	else {
-		if( t.tp == 6 ){
-			status.er = lexerErr;
-			status.tk = t;
-			return;
-		}
-		else {
-			status.er = syntaxError;
-			status.tk = t;
-			return;
-		}
+		if( t.tp == 6 ) status.er = lexerErr;
+		else status.er = syntaxError;
+		status.tk = t;
+		return;
 	}
 }
 
@@ -509,96 +390,74 @@ void statement()
 // Function for variable declaration statements
 void varDeclarStatement()
 {
-	// Check first token is 'var'
 	Token t = GetNextToken();
-	// Check for lexer errors
 	if ( t.tp == 6 ){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( ( t.tp == 0 ) && ( !strcmp(t.lx, "var")))
-	{
-		;
-	}
+
+	//______ VAR ______
+	if( ( t.tp == 0 ) && ( !strcmp(t.lx, "var")));
 	else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
 	}
 
-	// Check next token is type
+	//______ TYPE ______
 	type();
 	if( status.er != 0 ) return;
 
-	// Check next token is identifier
+	//______ IDENTIFIER ______
 	t = GetNextToken();
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( t.tp == 1 ){
-		;
-	}
+	if( t.tp == 1 );
 	else {
 		status.er = idExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Peek at next token to check if it is a comma
+	//______ {, IDENTIFIER} ______
 	t = PeekNextToken();
 	int loop = 0;
-	if( (t.tp== 3) && (t.lx[0] == ','))
-	{
-		loop = 1;
-	}
-	while (loop)
-	{
-		// Discard comma
+	if( (t.tp== 3) && (t.lx[0] == ',')) loop = 1;
+	while (loop){
 		t = GetNextToken();
 
-		// Check for identifier
+		//______ IDENTIFIER ______
 		t = GetNextToken();
-		if( t.tp == 6 )
-		{
+		if( t.tp == 6 ){
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
-		if( t.tp == 1 ){
-			;
-		}
+		if( t.tp == 1 );
 		else {
 			status.er = idExpected;
 			status.tk = t;
 			return;
 		}
 
-		// Peek to see if next token is comma
+		//______ , ______
 		t = PeekNextToken();
-		if( (t.tp == 3) && (t.lx[0] == ','))
-		{
-			;
-		}
-		else{
-			loop = 0;
-		}
+		if( (t.tp == 3) && (t.lx[0] == ','));
+		else loop = 0;
 	}
 
-	// Check for semicolon
+	//______ ; ______
 	t = GetNextToken();
-	if( t.tp == 6)
-	{
+	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == ';')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ';'));
 	else{
 		status.er = semicolonExpected;
 		status.tk = t;
@@ -610,40 +469,35 @@ void varDeclarStatement()
 // Function for let statment
 void letStatement()
 {
+	//______ LET ______
 	Token t = GetNextToken();
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6 ) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 0) && (!strcmp(t.lx, "let"))){
-		;
-	}
+	if( (t.tp == 0) && (!strcmp(t.lx, "let")));
 	else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
 	}
 
-	// Check next token is identifier
+	//______ IDENTIFIER ______
 	t = GetNextToken();
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6 ){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( t.tp == 1 ){
-		;
-	}
+	if( t.tp == 1 );
 	else {
 		status.er = idExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Check if next token is '['
+	//______ [ ______
 	t = PeekNextToken();
 	if(t.tp == 6){
 		status.er = lexerErr;
@@ -651,22 +505,18 @@ void letStatement()
 		return;
 	}
 	if( (t.tp == 3) && (t.lx[0] == '[')){
-		// Discard [
 		t = GetNextToken();
-		// Continue checking for expression
 		expression();
 		if( status.er != 0 ) return;
 
-		// Check for closing parenthesis
+		//______ ] ______
 		t = GetNextToken();
 		if( t.tp == 6){
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
-		if( (t.tp == 3)&&(t.lx[0] == ']')){
-			;
-		}
+		if( (t.tp == 3)&&(t.lx[0] == ']'));
 		else {
 			status.er = closeBracketExpected;
 			status.tk = t;
@@ -674,29 +524,25 @@ void letStatement()
 		}
 	}
 
-	// Check for equals
+	//______ = ______
 	t = GetNextToken();
-	// Check for lexer error
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
-	if((t.tp == 3)&& (t.lx[0] == '=')){
-		;
-	}
-	else{
+	if((t.tp == 3)&& (t.lx[0] == '='));
+	else {
 		status.er = equalExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Check for expression
+	//______ EXPRESSION ______
 	expression();
 	if( status.er != 0 ) return;
 
-	//Check for semicolon
+	//______ ; ______
 	t = GetNextToken();
 	if( t.tp == 6 ){
 		status.er = lexerErr;
@@ -704,9 +550,7 @@ void letStatement()
 		return;
 	}
 
-	if( (t.tp == 3) && (t.lx[0] == ';')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ';'));
 	else {
 		status.er = semicolonExpected;
 		status.tk = t;
@@ -718,55 +562,46 @@ void letStatement()
 // Function for if statement
 void ifStatement()
 {	
-	// Check for if
+	//______ IF ______
 	Token t = GetNextToken();
 	if ( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
-	if( (t.tp == 0) && !strcmp(t.lx, "if"))
-	{
-		;
-	}
+	if( (t.tp == 0) && !strcmp(t.lx, "if"));
 	else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
 	}
 
-
-	// Check for (
+	//______ ( ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == '(')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '('));
 	else {
 		status.er = openParenExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Check for expression
+	//______ EXPRESSION ______
 	expression();
 	if( status.er != 0 ) return;
 
-	// Check for )
+	//______ ) ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == ')')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ')'));
 	else {
 		status.er = closeParenExpected;
 		status.tk = t;
@@ -774,126 +609,104 @@ void ifStatement()
 	}
 
 
-	// Check for {
+	//______ { ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == '{')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '{'));
 	else {
 		status.er = openBraceExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Check for statement
+	//______ STATEMENT ______
 	statement();
 	if( status.er != 0 ) return;
 
-	// Check for more statements
+	//______ {STATEMENT} ______
 	t = PeekNextToken();
 	int loop = 0;
-	if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") || !strcmp(t.lx, "do") || !strcmp(t.lx, "return"))
-	{
-		loop = 1;
-	}
+	if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") 
+				|| !strcmp(t.lx, "do") || !strcmp(t.lx, "return")) loop = 1;
+
 	while (loop){
 		statement();
 		if( status.er != 0) return;
 		t = PeekNextToken();
-		if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") || !strcmp(t.lx, "do") || !strcmp(t.lx, "return"))
-		{
-			;
-		}
-		else {
-			loop = 0;
-		}
+		if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") 
+				|| !strcmp(t.lx, "do") || !strcmp(t.lx, "return"));
+		else loop = 0;
 	}
 
-	// Check for }
+	//______ } ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == '}')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '}'));
 	else {
 		status.er = closeBraceExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Check if there is an else
+	//______ [ELSE] ______
 	t = PeekNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
 	if( !strcmp(t.lx, "else")){
-		// Consume else
 		t = GetNextToken();
 
-		//Check for {
+		//______ { ______
 		t = GetNextToken();
 		if( t.tp == 6){
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
-		if((t.tp == 3) && (t.lx[0] == '{'))
-		{
-			;
-		}
+		if((t.tp == 3) && (t.lx[0] == '{'));
 		else {
 			status.er = openBraceExpected;
 			status.tk = t;
 			return;
 		}
 
-			
-		// Check for statement
+		//______ STATEMENT ______
 		statement();
 		if( status.er != 0 ) return;
 
-		// Check for more statements
+		//______ {STATEMENT} ______
 		t = PeekNextToken();
 		int loop = 0;
-		if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") || !strcmp(t.lx, "do") || !strcmp(t.lx, "return"))
-		{
-			loop = 1;
-		}
+		if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") 
+				|| !strcmp(t.lx, "do") || !strcmp(t.lx, "return")) loop = 1;
+
 		while (loop){
 			statement();
 			if( status.er != 0) return;
 			t = PeekNextToken();
-			if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") || !strcmp(t.lx, "do") || !strcmp(t.lx, "return"))
-			{
-				;
-			}
-			else {
-				loop = 0;
-			}
+			if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") 
+					|| !strcmp(t.lx, "do") || !strcmp(t.lx, "return"));
+			else loop = 0;
 		}
 
-		// Check for }
+		//______ } ______
 		t = GetNextToken();
 		if( t.tp == 6){
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
-		if( (t.tp == 3) && (t.lx[0] == '}')){
-			;
-		}
+		if( (t.tp == 3) && (t.lx[0] == '}'));
 		else {
 			status.er = closeBraceExpected;
 			status.tk = t;
@@ -906,7 +719,7 @@ void ifStatement()
 // Function for while statement
 void whileStatement()
 {
-	// Check for while
+	//______ WHILE ______
 	Token t = GetNextToken();
 	if ( t.tp == 6){
 		status.er = lexerErr;
@@ -914,100 +727,86 @@ void whileStatement()
 		return;
 	}
 
-	if( (t.tp == 0) && !strcmp(t.lx, "while"))
-	{
-		;
-	}
+	if( (t.tp == 0) && !strcmp(t.lx, "while"));
 	else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
 	}
 
-
-	// Check for (
+	//______ ( ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == '(')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '('));
 	else {
 		status.er = openParenExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Check for expression
+	//______ EXPRESSION ______
 	expression();
 	if( status.er != 0 ) return;
 
-	// Check for )
+	//______ ) ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == ')')){;}
+	if( (t.tp == 3) && (t.lx[0] == ')'));
 	else {
 		status.er = closeParenExpected;
 		status.tk = t;
 		return;
 	}
 
-
-	// Check for {
+	//______ { ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == '{')){;}
+	if( (t.tp == 3) && (t.lx[0] == '{'));
 	else {
 		status.er = openBraceExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Check for statement
+	//_______ STATEMENT _______
 	statement();
 	if( status.er != 0 ) return;
 
-	// Check for more statements
+	//_______ {STATEMENT} ______
 	t = PeekNextToken();
 	int loop = 0;
-	if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") || !strcmp(t.lx, "do") || !strcmp(t.lx, "return"))
-	{
-		loop = 1;
-	}
+	if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") 
+			|| !strcmp(t.lx, "do") || !strcmp(t.lx, "return")) loop = 1;
+	
 	while (loop){
 		statement();
 		if( status.er != 0) return;
 		t = PeekNextToken();
-		if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") || !strcmp(t.lx, "do") || !strcmp(t.lx, "return"))
-		{
-			;
-		}
-		else {
-			loop = 0;
-		}
+		if( !strcmp(t.lx, "var") || !strcmp(t.lx, "let") || !strcmp(t.lx, "if") || !strcmp(t.lx, "while") 
+				|| !strcmp(t.lx, "do") || !strcmp(t.lx, "return"));
+		else loop = 0;
 	}
 
-	// Check for }
+	//______ } ______
 	t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 3) && (t.lx[0] == '}')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '}'));
 	else {
 		status.er = closeBraceExpected;
 		status.tk = t;
@@ -1020,40 +819,32 @@ void whileStatement()
 // Function for do statement
 void doStatement()
 {
+	//______ DO ______
 	Token t = GetNextToken();
-	// Check for lexer errors
-	if( t.tp == 6 )
-	{
+	if( t.tp == 6 ){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	// Check it is 'do'
-	if( (t.tp == 0) && !strcmp(t.lx, "do"))
-	{
-		;
-	}
+	if( (t.tp == 0) && !strcmp(t.lx, "do"));
 	else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
 	}
 
+	//______ SUBROUTINE CALL ______
 	subroutineCall();
 	if( status.er != 0 ) return;
 
-	// Check for semi colon
+	//______ ; ______
 	t = GetNextToken();
-	if( t.tp == 6)
-	{
+	if( t.tp == 6) {
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
-	if( (t.tp == 3) && (t.lx[0] == ';')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ';'));
 	else {
 		status.er = semicolonExpected;
 		status.tk = t;
@@ -1066,49 +857,37 @@ void doStatement()
 void subroutineCall()
 {
 	Token t = GetNextToken();
-	// Check for lexer errors
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
-	// Check for identifier
-	if( t.tp == 1)
-	{
-		;
-	}
+	//______IDENTIFIER______
+	if( t.tp == 1);
 	else{
 		status.er = idExpected;
 		status.tk = t;
 		return;
 	}
 
+	//______[.IDENTIFIER]______
 	t = PeekNextToken();
-	// Check for lexer errors
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-	// If next token is full stop, check for another identifier
-	if( (t.tp == 3) && (t.lx[0] == '.'))
-	{
-		// Consume '.'
+	if( (t.tp == 3) && (t.lx[0] == '.')) {
 		t = GetNextToken();
 		t = GetNextToken();
-		// Check for lexer errors
 		if( t.tp == 6){
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
 
-		// Check for identifier
-		if( t.tp == 1)
-		{
-			;
-		}
+		//______IDENTIFIER______
+		if( t.tp == 1);
 		else{
 			status.er = idExpected;
 			status.tk = t;
@@ -1116,46 +895,36 @@ void subroutineCall()
 		}
 	}
 
+	//______ ( ______
 	t = GetNextToken();
-	// Check for lexer errors
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
-	if( (t.tp == 3) && (t.lx[0] == '('))
-	{
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == '('));
 	else {
 		status.er = openParenExpected;
 		status.tk = t;
 		return;
 	}
 
-	// Only call expression list if next token isnt ')'
+	//______ EXPRESSION LIST ______
 	t = PeekNextToken();
-	if( (t.tp == 3) && (t.lx[0] == ')')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ')'));
 	else {
 		expressionList();
 		if( status.er != 0) return;
 	}
 
+	//______ ) ______
 	t = GetNextToken();
-	// Check for lexer errors
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
-	if( (t.tp == 3) && (t.lx[0] == ')'))
-	{
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ')'));
 	else {
 		status.er = closeParenExpected;
 		status.tk = t;
@@ -1167,33 +936,25 @@ void subroutineCall()
 // Function for expression list
 void expressionList() 
 {
-	// We know if no expression list if first token is ')'
+	//______ ) ______
 	Token t = PeekNextToken();
-	if( (t.tp == 3) && (t.lx[0] == ')'))
-	{
-		return;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ')')) return;
 
-	// Otherwise
+	//_____ EXPRESSION ______
 	expression();
 	if(status.er != 0) return;
 
-	//Loop check for more expressions
+	//______ {, EXPRESSION} ______
 	t = PeekNextToken();
 	int loop = 0;
-	if((t.tp == 3) && (t.lx[0] == ',')){
-		loop = 1;
-	}
+	if((t.tp == 3) && (t.lx[0] == ',')) loop = 1;
 	while (loop){
-		// Consume comma
 		t = GetNextToken();
 		expression();
 		if(status.er != 0 ) return;
 
 		t = PeekNextToken();
-		if((t.tp == 3) && (t.lx[0] == ',')){
-			;
-		}
+		if((t.tp == 3) && (t.lx[0] == ','));
 		else {
 			loop = 0;
 		}
@@ -1204,36 +965,29 @@ void expressionList()
 // Function for return statements
 void returnStatement()
 {
+	//______ RETURN ______
 	Token t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
 		return;
 	}
-
-	if( (t.tp == 0)&& !strcmp(t.lx, "return") ){
-		;
-	}
+	if( (t.tp == 0)&& !strcmp(t.lx, "return") );
 	else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
 	}
 
-	// Peek at next token to see if it is a semicolon
+	//______ ; | EXPRESSION ______
 	t = PeekNextToken();
-	if( (t.tp == 3) && (t.lx[0] == ';')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ';'));
 	else if ((t.tp == 0) || (t.tp == 1) || (t.tp == 2) || (t.tp == 4) || ((t.tp == 3)&&(t.lx[0] == '(')) ){
 		expression();
 		if( status.er != 0) return;
 	}
-
 	t = GetNextToken();
-	if( (t.tp == 3) && (t.lx[0] == ';')){
-		;
-	}
+	if( (t.tp == 3) && (t.lx[0] == ';'));
 	else {
 		status.er = semicolonExpected;
 		status.tk = t;
@@ -1245,33 +999,23 @@ void returnStatement()
 // Function for an expression
 void expression()
 {
+	//______ RELATIONAL EXPRESSION ______
 	Token t = PeekNextToken();
 	relationalExpression();
 	if( status.er != 0) return;
 
-	// Check for more relational expressions
+	//______ {(& | |) RELATIONAL EXPRESSION} ______
 	t = PeekNextToken();
 	int loop = 0;
-
-	if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|') )){
-		loop = 1;
-	}
-
+	if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|') )) loop = 1;
 	while (loop)
 	{
-		// Consume '&' or '|'
 		t = GetNextToken();
 		t = PeekNextToken();
 		relationalExpression();
-		
 		if( status.er != 0) return;
-
-		if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|'))){
-			;
-		}
-		else {
-			loop = 0;
-		}
+		if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|')));
+		else loop = 0;
 	}
 }
 
@@ -1279,32 +1023,22 @@ void expression()
 // Function for relational expressions
 void relationalExpression()
 {	
+	//______ ARITHMETIC EXPRESSION ______
 	Token t = PeekNextToken();
 	arithmeticExpression();
 	if( status.er != 0) return;
-
-	// Check for more arithmetic expressions
+	
+	//______ {(=|<|>) ARITHMETIC EXPRESSION} ______
 	t = PeekNextToken();
 	int loop = 0;
-
-	if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>') )){
-		loop = 1;
-	}
-
-	while (loop)
-	{
-		// Consume '=', '<' or '>'
+	if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>') )) loop = 1;
+	while (loop){
 		t = GetNextToken();
 		t = PeekNextToken();
 		arithmeticExpression();
 		if( status.er != 0) return;
-
-		if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>'))){
-			;
-		}
-		else {
-			loop = 0;
-		}
+		if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>')));
+		else loop = 0;
 	}
 }
 
@@ -1312,66 +1046,42 @@ void relationalExpression()
 // Function for arithmetic expression
 void arithmeticExpression()
 {	
+	//______ TERM ______
 	term();
 	if( status.er != 0) return;
-
-	// Check for more terms
+	//______ {(+ | -) TERM} ______
 	Token t = PeekNextToken();
 	int loop = 0;
-
-	if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') )){
-		loop = 1;
-	}
-
-	while (loop)
-	{
-		// Consume '+' or '-'
+	if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') ))loop = 1;
+	while (loop) {
 		t = GetNextToken();
-
 		term();
 		if( status.er != 0) return;
-
 		t = PeekNextToken();
-		if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') )){
-			;
-		}
-		else {
-			loop = 0;
-		}
+		if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') ));
+		else loop = 0;
 	}
-
 }
 
 
 // Function for term
 void term()
 {	
+	//______ FACTOR ______
 	factor();
 	if( status.er != 0) return;
 
-	// Check for more factors
+	//______{(*|/) FACTOR}
 	Token t = PeekNextToken();
 	int loop = 0;
-
-	if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') )){
-		loop = 1;
-	}
-
-	while (loop)
-	{
-		// Consume '*' or '/'
+	if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') )) loop = 1;
+	while (loop) {
 		t = GetNextToken();
-
 		factor();
 		if( status.er != 0) return;
-
 		t = PeekNextToken();
-		if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') )){
-			;
-		}
-		else {
-			loop = 0;
-		}
+		if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') ));
+		else loop = 0;
 	}
 
 }
@@ -1380,13 +1090,11 @@ void term()
 // Function for factor
 void factor()
 {
-	// Peek first to see if token is - or ~
+	//______ -|~______
 	Token t = PeekNextToken();
-	
-	if( (t.tp == 3) && ( (t.lx[0] == '-') || (t.lx[0] == '~'))){
-		t = GetNextToken();
-	}
+	if( (t.tp == 3) && ( (t.lx[0] == '-') || (t.lx[0] == '~'))) t = GetNextToken();
 
+	//______ OPERAND ______
 	operand();
 	if (status.er != 0 ) return;
 }
@@ -1404,64 +1112,62 @@ void operand()
 	//_____INTEGER CONSTANT______
 	if( t.tp == 2){;}
 	//_______IDENTIFIER________
-	else if( t.tp == 1 )
-	{
-		// Peek next token for '.'
+	else if( t.tp == 1 ){
+		//______ . ______
 		t = PeekNextToken();
 		if( (t.tp == 3) && (t.lx[0] == '.')){
-			// Consume '.'
 			t = GetNextToken();
-
-			// Check for another identifier
+			//_______ IDENTIFIER ______
 			t = GetNextToken();
 			if( t.tp == 6){
 				status.er = lexerErr;
 				status.tk = t;
 				return;
 			}
-			if( t.tp == 1){;}
+			if( t.tp == 1);
 			else {
 				status.er = idExpected;
 				status.tk = t;
 				return;
 			}
-
 		}
 
-		// Peek next token for a '[' or '('
+		//______ [______
 		t = PeekNextToken();
 		if( (t.tp == 3) && (t.lx[0] == '[')){
-			// Consume '['
 			t = GetNextToken();
+			//______ EXPRESSION ______
 			expression();
 			if( status.er != 0) return;
-			// Check for closing ']'
+			//______ ] ______
 			t = GetNextToken();
 			if( t.tp == 6){
 				status.er = lexerErr;
 				status.tk = t;
 				return;
 			}
-			if( (t.tp == 3) && (t.lx[0] == ']')){;}
+			if( (t.tp == 3) && (t.lx[0] == ']'));
 			else{
 				status.er = closeBracketExpected;
 				status.tk = t;
 				return;
 			}
 		}
+
+		//______ ( ______
 		else if( (t.tp == 3) && (t.lx[0] == '(')){
-			// Consume '(
 			t = GetNextToken();
+			//______ EXPRESSION LIST ______
 			expressionList();
 			if( status.er != 0) return;
-			// Check for closing ')'
 			t = GetNextToken();
 			if( t.tp == 6){
 				status.er = lexerErr;
 				status.tk = t;
 				return;
 			}
-			if( (t.tp == 3) && (t.lx[0] == ')')){;}
+			//______ ) ______
+			if( (t.tp == 3) && (t.lx[0] == ')'));
 			else{
 				status.er = closeParenExpected;
 				status.tk = t;
@@ -1469,31 +1175,33 @@ void operand()
 			}
 		}
 	}
-	//_______EXPRESSION________
+
+	//_______ ( ________
 	else if( (t.tp == 3) && (t.lx[0] == '(')){
+		//______ EXPRESSION ______
 		expression();
 		if(status.er != 0 ) return;
-		// Check for )
+		//______ ) _______
 		t = GetNextToken();
 		if( t.tp == 6){
 			status.er = lexerErr;
 			status.tk = t;
 			return;
 		}
-		if( (t.tp == 3) && (t.lx[0] == ')')){
-			;
-		}
+		if( (t.tp == 3) && (t.lx[0] == ')'));
 		else {
 			status.er = closeParenExpected;
 			status.tk = t;
 			return;
 		}
 	}
-	//________STRING LITERAL_______
-	else if (t.tp == 4) {;}
-	//________TRUE/FALSE/NULL/THIS_______
+
+	//________ STRING LITERAL _______
+	else if (t.tp == 4);
+
+	//________ TRUE/FALSE/NULL/THIS _______
 	else if(( t.tp == 0) && ( !strcmp(t.lx, "true") || !strcmp(t.lx, "false") || 
-			!strcmp(t.lx, "null") || !strcmp(t.lx, "this") )){;}
+			!strcmp(t.lx, "null") || !strcmp(t.lx, "this") ));
 	else {
 		status.er = syntaxError;
 		status.tk = t;
@@ -1510,139 +1218,76 @@ int InitParser (char* file_name)
 
 ParserInfo Parse ()
 {
-	// Start by setting global parser status error to none
+	// Default error is none
 	status.er = none;
 
-	//___________CLASS___________
-	// Get the first token
+	//___________ CLASS ___________
 	Token t = GetNextToken();
-	// First check that the first token is the class identifier
-	if( (t.tp == 0) && !strcmp(t.lx, "class"))
-	{
-		;
-	}
-	// If not set status error using error function
-	else 
-	{
-		// First check if it's a lexer error 
-		if (t.tp == 6)
-		{
-			status.er = lexerErr;
-			status.tk = t;
-		}
-		else {
-			status.er = classExpected;
-			status.tk = t;
-		}
-		// Return error ParserInfo
+	if (t.tp == 6){
+		status.er = lexerErr;
+		status.tk = t;
 		return status;
-
+	}
+	if( (t.tp == 0) && !strcmp(t.lx, "class"));
+	else {
+		status.er = classExpected;
+		status.tk = t;
+		return status;
 	}
 
-	//___________IDENTIFIER___________
-	// Get the next token
+	//___________ IDENTIFIER ___________
 	t = GetNextToken();
-	// Check next token is identifier
-	if( t.tp == 1)
-	{
-		;
+	if (t.tp == 6){
+		status.er = lexerErr;
+		status.tk = t;
+		return status;
 	}
-	// If not set status error using error function
-	else 
-	{
-		// First check if it's a lexer error 
-		if (t.tp == 6)
-		{
-			status.er = lexerErr;
-			status.tk = t;
-		}
-		else {
-			status.er = idExpected;
-			status.tk = t;
-		}
-		// Return error ParserInfo
+	if( t.tp == 1);
+	else {
+		status.er = idExpected;
+		status.tk = t;
 		return status;
 	}
 
-	//___________{___________
-	// Get the next token
+	//___________ { ___________
 	t = GetNextToken();
-	// Check if it is an open curly bracket
-	if( (t.tp == 3) && (t.lx[0] = '{'))
-	{
-		;
+	if (t.tp == 6){
+		status.er = lexerErr;
+		status.tk = t;
+		return status;
 	}
-	// If not set status error using error function
-	else 
-	{
-		// First check if it's a lexer error 
-		if (t.tp == 6)
-		{
-			status.er = lexerErr;
-			status.tk = t;
-		}
-		else {
-			status.er = openBraceExpected;
-			status.tk = t;
-		}
-		// Return error ParserInfo
+	if( (t.tp == 3) && (t.lx[0] = '{'));
+	else {
+		status.er = openBraceExpected;
+		status.tk = t;
 		return status;
 	}
 
-
-	//___________MEMBER DECLAR___________
-	// Can be 0+ member declarations
+	//___________ {MEMBER DECLAR} ___________
 	t = PeekNextToken();
 	int loop = 0;
-	if( (t.tp == 3 ) && (t.lx[0] == '}')){
-		;
-	}
-	else {
-		loop = 1;
-	}
-
-	// Only loop if next token is not '}'
+	if( (t.tp == 3 ) && (t.lx[0] == '}'));
+	else loop = 1;
 	while( loop ){
 		memberDeclar();
-		// Check if any errors
-		
-		if( status.er != 0)	{
-			return status;
-		}
-		// Check next token
+		if( status.er != 0) return status;
 		t = PeekNextToken();
-		// End loop when next token is '}'
-		if( (t.tp == 3 ) && (t.lx[0] == '}')){
-			loop = 0;
-		}
+		if( (t.tp == 3 ) && (t.lx[0] == '}')) loop = 0;
 	}
 	
-
 	//___________}___________
-	// Get the next token
 	t = GetNextToken();
-	// Check if it is an open curly bracket
-	if((t.tp == 3) && (t.lx[0] = '}'))
-	{
-		;
-	}
-	// If not set status error using error function
-	else 
-	{
-		// First check if it's a lexer error 
-		if (t.tp == 6)
-		{
-			status.er = lexerErr;
-			status.tk = t;
-		}
-		else {
-			status.er = closeBraceExpected;
-			status.tk = t;
-		}
-		// Return error ParserInfo
+	if (t.tp == 6){
+		status.er = lexerErr;
+		status.tk = t;
 		return status;
 	}
-
+	if((t.tp == 3) && (t.lx[0] = '}'));
+	else {
+		status.er = closeBraceExpected;
+		status.tk = t;
+		return status;
+	}
 	return status;
 }
 
