@@ -4,6 +4,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "symbols.h"
 
 // Parser Function Declarations
 void memberDeclar();
@@ -70,13 +71,19 @@ void classVarDeclar()
 		return;
 	}
 
+	Kind kind;
 	//___________ FIELD/STATIC ___________
-	if(!strcmp(t.lx, "field") || !strcmp(t.lx, "static"));
+	if(!strcmp(t.lx, "field")){ kind = FIELD;}
+	else if(!strcmp(t.lx, "static")){kind = STATIC;}
 	else {
 		status.er = classVarErr;
 		status.tk = t;
 		return;
 	}
+
+	t = PeekNextToken();
+	char* typeSymbol = "";
+	strcpy(typeSymbol, t.lx);
 
 	//___________ TYPE ___________
 	type();
@@ -89,7 +96,9 @@ void classVarDeclar()
 		status.tk = t;
 		return;
 	}
-	if(t.tp == 1);
+	if(t.tp == 1){
+		Define(t.lx, typeSymbol, kind);
+	}
 	else {
 		status.er = idExpected;
 		status.tk = t;
@@ -109,7 +118,9 @@ void classVarDeclar()
 			status.tk = t;
 			return;
 		}
-		if(t.tp == 1);
+		if(t.tp == 1){
+			Define(t.lx, typeSymbol, kind);
+		}
 		else {
 			status.er = idExpected;
 			status.tk = t;
@@ -174,6 +185,9 @@ void subroutineDeclar()
 		status.tk = t;
 		return;
 	}
+	startSubroutine();
+	Define("this", "get class name",ARG)
+	
 
 	//______ TYPE OR VOID ___________
 	t = PeekNextToken();
