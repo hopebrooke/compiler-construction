@@ -27,182 +27,133 @@ Date Work Commenced: 03/04/2023
 
 // Initialise class symbol table
 int Constructor() {
-    classTable = NULL;
-    subroutineTable = NULL;
+    ptCount = 0;
+    stCount = 0;
     return 1;
 }
 
+int newClass(char * name) {
+    strcpy(programTable[ptCount].name, name);
+    programTable[ptCount].ctCount = 0; 
+    ptCount ++;
+}
 
 // Empty subroutine table
 int startSubroutine() {
-    symbol * symbols = subroutineTable;
-    // Go through all freeing
-    while(symbols != NULL){
-        symbol* next = symbols->next;
-        free(symbols);
-        symbols = next;
-    }
-    subroutineTable = NULL;
+    stCount = 0;
 }
 
 
 // Define new symbol
-int Define(char* name, char* type, Kind kind) {
-
-    symbol * newSymbol;
-
- 
-    // Check for scope
-    if((kind==0) || (kind==1)){
-        newSymbol = classTable;
-
+int Define(char* name, char* type, Kind kind, int index, char args[10][128], char argTypes[10][128]){
+    if ((kind==2) || (kind==3)) {
+        // subroutine table
+        subroutineTable[stCount].kind = kind;
+        strcpy(subroutineTable[stCount].name, name);
+        strcpy(subroutineTable[stCount].type, type);
+        subroutineTable[stCount].index = VarCount(kind);
+        subroutineTable[stCount].vf = 0;
+        subroutineTable[stCount].args[0][0] = '\0';
+        subroutineTable[stCount].argTypes[0][0] = '\0';
+        stCount ++;
     } else {
-        newSymbol = subroutineTable;
-
-    }
-
-    // Search through scope table for variable to make sure it doesn't already exist
-    while(newSymbol!=NULL){
-    
-        if(strcmp(newSymbol->name, name) == 0){
-     
-            printf("symbol already defined in scope");
-            return 0; //return 0 for above error
- 
+        // class table 
+        if((kind==0) || (kind==1)) {
+            programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].vf = 0;
+            programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].args[0][0] = '\0';
+            programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].argTypes[0][0] = '\0';
+            programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].index = VarCount(kind);
+        } else {
+            programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].vf = 1;
+            programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].index = index;
+            for (int i=0; i<10; i++){
+                strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].args[i], args[i]);
+                strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].argTypes[i], argTypes[i]);
+            }
         }
-        newSymbol = newSymbol->next;
-  
-    }
-
-
-    // If no error, create symbol
-    newSymbol = (symbol *) malloc(sizeof(symbol));
-
-    strcpy(newSymbol->name, name);
-    strcpy(newSymbol->type, type);
-    newSymbol->kind = kind;
-
-    // Work out index of symbol
-    int num = VarCount(kind);
-    newSymbol->index = num;
-
-
-    // Add symbol to table
-    if((newSymbol->kind == 0) || (newSymbol->kind ==1)){
-        newSymbol->next = classTable;
-        classTable=newSymbol;
-    } else {
-        newSymbol->next = subroutineTable;
-        subroutineTable=newSymbol;
+        programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].kind = kind;
+        strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].name, name);
+        strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].type, type);
+        programTable[ptCount-1 ].ctCount ++;
     }
 }
 
-
 // Count number of that kind
 int VarCount(Kind kind){
-    symbol * symbols;
     int count = 0;
     if((kind==0) || (kind==1)){
-        symbols = classTable;
-    } else {
-        symbols = subroutineTable;
-    }
-    while(symbols != NULL){
-        if(symbols->kind == kind ){
-            count ++;
+        for(int i=0; i < programTable[ptCount-1].ctCount; i++) {
+            if(programTable[ptCount-1].classTable[i].kind == kind)
+                count ++;
         }
-        symbols = symbols->next;
+    } else {
+        for(int i=0; i < stCount; i++) {
+            if(subroutineTable[i].kind == kind)
+                count ++;
+        }
     }
     return count;
 }
 
 // Returns the kind of symbol of named identifier
-Kind KindOf(char * name){
-    // Search linked list for name
-    symbol * kindSymbol = subroutineTable;
-    
+Kind KindOf(char * name) {
     Kind kind = NONE;
-
-    // First search subroutine table if not null:
-    while(kindSymbol != NULL) {
-        if(strcmp(name, kindSymbol->name) == 0){
-            kind = kindSymbol->kind;
-            return kind;
+    // First search subroutine table:
+    for(int i=0; i<stCount; i++){
+        if(strcmp(subroutineTable[i].name, name)){
+            return subroutineTable[i].kind;
         }
-        kindSymbol = kindSymbol->next;
     }
-    
     // If not found in subroutine, repeat for class
-    kindSymbol = classTable;
-    while(kindSymbol != NULL) {
-        if(strcmp(name, kindSymbol->name) == 0){
-            kind = kindSymbol->kind;
-            return kind;
+    // First search subroutine table:
+    for(int i=0; i<programTable[ptCount-1].ctCount; i++){
+        if(strcmp(programTable[ptCount-1].classTable[i].name, name)){
+            return programTable[ptCount-1].classTable[i].kind;
         }
-        kindSymbol = kindSymbol->next;
     }
-
     // Return kind
     return kind;
-
 }
 
 
 // Returns type of named identifier
 char* TypeOf(char* name){
-    // Search linked list for name
-    symbol * typeSymbol = subroutineTable;
-    
-    char* type = NULL;
-
-    // First search subroutine table if not null:
-    while(typeSymbol != NULL) {
-        if(strcmp(name, typeSymbol->name) == 0){
-            strcpy(type, typeSymbol->type);
-            return type;
+    char * type = "-1";
+    // First search subroutine table:
+    for(int i=0; i<stCount; i++){
+        if(strcmp(subroutineTable[i].name, name)){
+            return subroutineTable[i].type;
         }
-        typeSymbol = typeSymbol->next;
     }
     
     // If not found in subroutine, repeat for class
-    typeSymbol = classTable;
-    while(typeSymbol != NULL) {
-        if(strcmp(name, typeSymbol->name) == 0){
-            strcpy(type, typeSymbol->type);
-            return type;
+    // First search subroutine table:
+    for(int i=0; i<programTable[ptCount-1].ctCount; i++){
+        if(strcmp(programTable[ptCount-1].classTable[i].name, name)){
+            return programTable[ptCount-1].classTable[i].type;
         }
-        typeSymbol = typeSymbol->next;
     }
     // Return type
     return type;
 }
 
 
-
 // Returns index of named identifier
 int IndexOf(char* name){
-    // Search linked list for name
-    symbol * symbol = subroutineTable;
-    
     int index = -1;
-
-    // First search subroutine table if not null:
-    while(symbol != NULL) {
-        if(strcmp(name, symbol->name) == 0){
-            index = symbol->index;
-            return index;
+   // First search subroutine table:
+    for(int i=0; i<stCount; i++){
+        if(strcmp(subroutineTable[i].name, name)){
+            return subroutineTable[i].index;
         }
-        symbol = symbol->next;
     }
     
     // If not found in subroutine, repeat for class
-    symbol = classTable;
-    while(symbol != NULL) {
-        if(strcmp(name, symbol->name) == 0){
-            index = symbol->index;
-            return index;
+    // First search subroutine table:
+    for(int i=0; i<programTable[ptCount-1].ctCount; i++){
+        if(strcmp(programTable[ptCount-1].classTable[i].name, name)){
+            return programTable[ptCount-1].classTable[i].index;
         }
-        symbol = symbol->next;
     }
     // Return type
     return index;
@@ -216,59 +167,87 @@ int main() {
     printf("Initialising constructor \n");
     Constructor();
 
+    int index = 0;
+    char args[10][128] = {"0", "0", "0", "0","0", "0","0", "0","0", "0"};
+    char argTypes[10][128] = {"0", "0", "0", "0","0", "0","0", "0","0", "0"};
+    char args1[10][128] = {"bob", "amy", "jeff", "happy","0", "0","0", "0","0", "0"};
+    char argTypes1[10][128] = {"char", "int", "string", "lemon","0", "0","0", "0","0", "0"};
+    
     // Define some kinds
     Kind class1 = STATIC;
     Kind class2 = FIELD;
     Kind sub1 = ARG;
     Kind sub2 = VAR;
+    Kind class3 = CONSTRUCTOR;
+    Kind class4 = FUNCTION;
+    Kind class5 = METHOD;
     
+    newClass("full");
     // Add some class identifiers
-    Define("classvar1", "String", class1);
-    Define("classvar2", "String", class2);
-    Define("classVar3", "String", class1);
-    Define("classVar4", "String", class2);
-    Define("classvar5", "String", class1);
+    Define("classvar1", "String", class1, index, args, argTypes);
+    Define("classvar2", "String", class2,index, args, argTypes);
+    Define("classVar3", "String", class1,index, args, argTypes);
+    Define("classVar4", "String", class2,index, args, argTypes);
+    Define("classvar5", "String", class1,index, args, argTypes);
+    Define("classvar6", "void", class3, 2, args1, argTypes1);
+    Define("classvar7", "int", class4, 4, args1, argTypes1);
     
-    printf("Printing class table: \n");
-    symbol * table = classTable;
-    while(table != NULL){
-        printf("%s, %s, %i, %i \n", table->name, table->type, table->kind, table->index);
-        table = table-> next;
+    newClass("empty");
+    
+    printf("Printing program table: \n");
+    for(int i=0; i<ptCount; i++) {
+        printf("Name: %s, Count: %i \n", programTable[i].name, programTable[i].ctCount);
+        
+    }
+    printf("Printing %s class table: \n", programTable[0].name);
+    printf("symbols in class: %i\n", programTable[0].ctCount);
+    for(int i=0; i<programTable[0].ctCount; i++) {
+        printf("%s, %s, %i, %i \n", programTable[0].classTable[i].name, programTable[0].classTable[i].type, programTable[0].classTable[i].kind, programTable[0].classTable[i].index);
+        if(programTable[0].classTable[i].vf == 1) {
+            for(int j=0; j<programTable[0].classTable[i].index; j++){
+                printf("%s, %s\n", programTable[0].classTable[i].args[j], programTable[0].classTable[i].argTypes[j] );
+            }
+        }
+    }
+    printf("Printing %s class table: \n", programTable[1].name);
+    for(int i=0; i<programTable[1].ctCount; i++) {
+        printf("%s, %s, %i, %i \n", programTable[1].classTable[i].name, programTable[1].classTable[i].type, programTable[1].classTable[i].kind, programTable[1].classTable[i].index);
+        if(programTable[1].classTable[i].vf == 1) {
+            for(int j=0; j<programTable[1].classTable[i].index; i++){
+                printf("%s, %s\n", programTable[1].classTable[i].args[j], programTable[1].classTable[i].argTypes[j] );
+            }
+        }
     }
 
     // Start a subroutine
     startSubroutine();
-    Define("subvar1", "String", sub1);
-    Define("subvar2", "String", sub1);
-    Define("subvar3", "String", sub2);
+    Define("subvar1", "String", sub1,index, args, argTypes);
+    Define("subvar2", "String", sub1,index, args, argTypes);
+    Define("subvar3", "String", sub2,index, args, argTypes);
 
     printf("Printing subroutine table \n");
-    table = subroutineTable;
-    while(table != NULL){
-        printf("%s, %s, %i, %i \n", table->name, table->type, table->kind, table->index);
-        table = table-> next;
+    for(int i=0; i<stCount; i++) {
+        printf("%s, %s, %i, %i \n", subroutineTable[i].name, subroutineTable[i].type, subroutineTable[i].kind, subroutineTable[i].index);
     }
 
     // Create new subroutine table
     // Start a subroutine
     startSubroutine();
-    Define("newsubvar1", "String", sub2);
-    Define("newsubvar2", "String", sub1);
-    Define("newsubvar3", "String", sub2);
+    Define("newsubvar1", "String", sub2,index, args, argTypes);
+    Define("newsubvar2", "String", sub1,index, args, argTypes);
+    Define("newsubvar3", "String", sub2,index, args, argTypes);
 
     printf("Printing new subroutine table \n");
-    table = subroutineTable;
-    while(table != NULL){
-        printf("%s, %s, %i, %i \n", table->name, table->type, table->kind, table->index);
-        table = table-> next;
+    for(int i=0; i<stCount; i++) {
+        printf("%s, %s, %i, %i \n", subroutineTable[i].name, subroutineTable[i].type, subroutineTable[i].kind, subroutineTable[i].index);
     }
+
     
-    printf("Printing class table: \n");
-    table = classTable;
-    while(table != NULL){
-        printf("%s, %s, %i, %i \n", table->name, table->type, table->kind, table->index);
-        table = table-> next;
-    }
+    // printf("Printing class table: \n");
+    // for(int i=0; i<ctCount; i++) {
+    //     printf("%s, %s, %i, %i \n", classTable[i].name, classTable[i].type, classTable[i].kind, classTable[i].index);
+        
+    // }
 
     return 1;
 
