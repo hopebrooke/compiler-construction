@@ -20,14 +20,15 @@ typedef struct symbol {
     char argTypes[10][128];
 } symbol;
 
-typedef struct table {
+typedef struct classTable {
     char name[128];
     symbol classTable[128];
     int ctCount;
     //memmory size needed?
 } classTable;
 
-
+char undeclaredTable[10][128];
+int utCount;
 classTable programTable[128];
 // Program table is an array of class tables
 int ptCount;
@@ -48,7 +49,7 @@ int VarCount(Kind kind);    // Returns num of variables of given kind in current
 Kind KindOf(char* name);    // Returns kind of named identifier in current scope, if doesn't exist, returns none
 char* TypeOf(char* name);   // Returns type of named identifier in current scope
 int IndexOf(char* name);    // Returns index assigned to named identifier
-
+int classExists(char *name);
 
 
 

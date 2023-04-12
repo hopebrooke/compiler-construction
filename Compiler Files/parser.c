@@ -82,7 +82,7 @@ void classVarDeclar()
 	}
 
 	t = PeekNextToken();
-	char* typeSymbol = "";
+	char typeSymbol[128];
 	strcpy(typeSymbol, t.lx);
 
 	//___________ TYPE ___________
@@ -97,7 +97,7 @@ void classVarDeclar()
 		return;
 	}
 	if(t.tp == 1){
-		Define(t.lx, typeSymbol, kind);
+		// Define(t.lx, typeSymbol, kind);
 	}
 	else {
 		status.er = idExpected;
@@ -119,7 +119,7 @@ void classVarDeclar()
 			return;
 		}
 		if(t.tp == 1){
-			Define(t.lx, typeSymbol, kind);
+			// Define(t.lx, typeSymbol, kind);
 		}
 		else {
 			status.er = idExpected;
@@ -160,7 +160,16 @@ void type()
 
 	//_______INT/CHAR/BOOL/ID_______
 	if(t.tp == 1);
-	else if ((t.tp == 0) &&(	!strcmp(t.lx, "int") ||
+	else if (t.tp == 0) {
+		// Check if identifier exists in classes
+		int exists = classExists(t.lx);
+		if( !exists ){
+			// Add to undeclared id list
+			strcpy(undeclaredTable[utCount], t.lx);
+			utCount ++;
+		}
+	}
+	else if ((!strcmp(t.lx, "int") ||
 		!strcmp(t.lx, "char") || !strcmp(t.lx, "boolean")));
 	else {
 		status.er = illegalType;
@@ -185,8 +194,8 @@ void subroutineDeclar()
 		status.tk = t;
 		return;
 	}
-	startSubroutine();
-	Define("this", "get class name",ARG)
+	// startSubroutine();
+	// Define("this", "get class name",ARG)
 	
 
 	//______ TYPE OR VOID ___________
@@ -1256,7 +1265,18 @@ ParserInfo Parse ()
 		status.tk = t;
 		return status;
 	}
-	if( t.tp == 1);
+	if( t.tp == 1) {
+		// Check if class exists:
+		int exists = classExists(t.lx);
+		if(exists) {
+			status.er = redecIdentifier;
+			status.tk = t;
+			return status;
+		} else {
+			newClass(t.lx);
+		}
+		
+	}
 	else {
 		status.er = idExpected;
 		status.tk = t;
@@ -1311,16 +1331,16 @@ int StopParser ()
 	return 1;
 }
 
-#ifndef TEST_PARSER
-int main ()
-{
-	InitLexer("semicolonExpected.jack");
+// #ifndef TEST_PARSER
+// int main ()
+// {
+// 	InitLexer("semicolonExpected.jack");
 
-	ParserInfo popping = Parse();
+// 	ParserInfo popping = Parse();
 
-	printf("Error %i: Line %i at or near %s\n", popping.er, popping.tk.ln, popping.tk.lx);
+// 	printf("Error %i: Line %i at or near %s\n", popping.er, popping.tk.ln, popping.tk.lx);
 
 
-	return 1;
-}
-#endif
+// 	return 1;
+// }
+// #endif

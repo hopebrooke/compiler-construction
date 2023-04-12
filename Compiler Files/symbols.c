@@ -29,6 +29,7 @@ Date Work Commenced: 03/04/2023
 int Constructor() {
     ptCount = 0;
     stCount = 0;
+    utCount = 0;
     return 1;
 }
 
@@ -159,99 +160,109 @@ int IndexOf(char* name){
     return index;
 }
 
-
-
-int main() {
-
-    // Initialise
-    printf("Initialising constructor \n");
-    Constructor();
-
-    int index = 0;
-    char args[10][128] = {"0", "0", "0", "0","0", "0","0", "0","0", "0"};
-    char argTypes[10][128] = {"0", "0", "0", "0","0", "0","0", "0","0", "0"};
-    char args1[10][128] = {"bob", "amy", "jeff", "happy","0", "0","0", "0","0", "0"};
-    char argTypes1[10][128] = {"char", "int", "string", "lemon","0", "0","0", "0","0", "0"};
-    
-    // Define some kinds
-    Kind class1 = STATIC;
-    Kind class2 = FIELD;
-    Kind sub1 = ARG;
-    Kind sub2 = VAR;
-    Kind class3 = CONSTRUCTOR;
-    Kind class4 = FUNCTION;
-    Kind class5 = METHOD;
-    
-    newClass("full");
-    // Add some class identifiers
-    Define("classvar1", "String", class1, index, args, argTypes);
-    Define("classvar2", "String", class2,index, args, argTypes);
-    Define("classVar3", "String", class1,index, args, argTypes);
-    Define("classVar4", "String", class2,index, args, argTypes);
-    Define("classvar5", "String", class1,index, args, argTypes);
-    Define("classvar6", "void", class3, 2, args1, argTypes1);
-    Define("classvar7", "int", class4, 4, args1, argTypes1);
-    
-    newClass("empty");
-    
-    printf("Printing program table: \n");
-    for(int i=0; i<ptCount; i++) {
-        printf("Name: %s, Count: %i \n", programTable[i].name, programTable[i].ctCount);
-        
-    }
-    printf("Printing %s class table: \n", programTable[0].name);
-    printf("symbols in class: %i\n", programTable[0].ctCount);
-    for(int i=0; i<programTable[0].ctCount; i++) {
-        printf("%s, %s, %i, %i \n", programTable[0].classTable[i].name, programTable[0].classTable[i].type, programTable[0].classTable[i].kind, programTable[0].classTable[i].index);
-        if(programTable[0].classTable[i].vf == 1) {
-            for(int j=0; j<programTable[0].classTable[i].index; j++){
-                printf("%s, %s\n", programTable[0].classTable[i].args[j], programTable[0].classTable[i].argTypes[j] );
-            }
+int classExists(char* name){
+    for(int i=0; i<ptCount; i++){
+        if(!strcmp(programTable[i].name, name)){
+            return 1;
         }
     }
-    printf("Printing %s class table: \n", programTable[1].name);
-    for(int i=0; i<programTable[1].ctCount; i++) {
-        printf("%s, %s, %i, %i \n", programTable[1].classTable[i].name, programTable[1].classTable[i].type, programTable[1].classTable[i].kind, programTable[1].classTable[i].index);
-        if(programTable[1].classTable[i].vf == 1) {
-            for(int j=0; j<programTable[1].classTable[i].index; i++){
-                printf("%s, %s\n", programTable[1].classTable[i].args[j], programTable[1].classTable[i].argTypes[j] );
-            }
-        }
-    }
-
-    // Start a subroutine
-    startSubroutine();
-    Define("subvar1", "String", sub1,index, args, argTypes);
-    Define("subvar2", "String", sub1,index, args, argTypes);
-    Define("subvar3", "String", sub2,index, args, argTypes);
-
-    printf("Printing subroutine table \n");
-    for(int i=0; i<stCount; i++) {
-        printf("%s, %s, %i, %i \n", subroutineTable[i].name, subroutineTable[i].type, subroutineTable[i].kind, subroutineTable[i].index);
-    }
-
-    // Create new subroutine table
-    // Start a subroutine
-    startSubroutine();
-    Define("newsubvar1", "String", sub2,index, args, argTypes);
-    Define("newsubvar2", "String", sub1,index, args, argTypes);
-    Define("newsubvar3", "String", sub2,index, args, argTypes);
-
-    printf("Printing new subroutine table \n");
-    for(int i=0; i<stCount; i++) {
-        printf("%s, %s, %i, %i \n", subroutineTable[i].name, subroutineTable[i].type, subroutineTable[i].kind, subroutineTable[i].index);
-    }
-
-    
-    // printf("Printing class table: \n");
-    // for(int i=0; i<ctCount; i++) {
-    //     printf("%s, %s, %i, %i \n", classTable[i].name, classTable[i].type, classTable[i].kind, classTable[i].index);
-        
-    // }
-
-    return 1;
-
+    return 0;
 }
+
+
+// int main() {
+
+//     // Initialise
+//     printf("Initialising constructor \n");
+//     Constructor();
+
+//     int index = 0;
+//     char args[10][128] = {"0", "0", "0", "0","0", "0","0", "0","0", "0"};
+//     char argTypes[10][128] = {"0", "0", "0", "0","0", "0","0", "0","0", "0"};
+//     char args1[10][128] = {"bob", "amy", "jeff", "happy","0", "0","0", "0","0", "0"};
+//     char argTypes1[10][128] = {"char", "int", "string", "lemon","0", "0","0", "0","0", "0"};
+    
+//     // Define some kinds
+//     Kind class1 = STATIC;
+//     Kind class2 = FIELD;
+//     Kind sub1 = ARG;
+//     Kind sub2 = VAR;
+//     Kind class3 = CONSTRUCTOR;
+//     Kind class4 = FUNCTION;
+//     Kind class5 = METHOD;
+    
+//     newClass("full");
+//     // Add some class identifiers
+//     Define("classvar1", "String", class1, index, args, argTypes);
+//     Define("classvar2", "String", class2,index, args, argTypes);
+//     Define("classVar3", "String", class1,index, args, argTypes);
+//     Define("classVar4", "String", class2,index, args, argTypes);
+//     Define("classvar5", "String", class1,index, args, argTypes);
+//     Define("classvar6", "void", class3, 2, args1, argTypes1);
+//     Define("classvar7", "int", class4, 4, args1, argTypes1);
+    
+//     newClass("empty");
+    
+//     printf("Printing program table: \n");
+//     for(int i=0; i<ptCount; i++) {
+//         printf("Name: %s, Count: %i \n", programTable[i].name, programTable[i].ctCount);
+        
+//     }
+//     printf("Printing %s class table: \n", programTable[0].name);
+//     printf("symbols in class: %i\n", programTable[0].ctCount);
+//     for(int i=0; i<programTable[0].ctCount; i++) {
+//         printf("%s, %s, %i, %i \n", programTable[0].classTable[i].name, programTable[0].classTable[i].type, programTable[0].classTable[i].kind, programTable[0].classTable[i].index);
+//         if(programTable[0].classTable[i].vf == 1) {
+//             for(int j=0; j<programTable[0].classTable[i].index; j++){
+//                 printf("%s, %s\n", programTable[0].classTable[i].args[j], programTable[0].classTable[i].argTypes[j] );
+//             }
+//         }
+//     }
+//     printf("Printing %s class table: \n", programTable[1].name);
+//     for(int i=0; i<programTable[1].ctCount; i++) {
+//         printf("%s, %s, %i, %i \n", programTable[1].classTable[i].name, programTable[1].classTable[i].type, programTable[1].classTable[i].kind, programTable[1].classTable[i].index);
+//         if(programTable[1].classTable[i].vf == 1) {
+//             for(int j=0; j<programTable[1].classTable[i].index; i++){
+//                 printf("%s, %s\n", programTable[1].classTable[i].args[j], programTable[1].classTable[i].argTypes[j] );
+//             }
+//         }
+//     }
+
+//     // Start a subroutine
+//     startSubroutine();
+//     Define("subvar1", "String", sub1,index, args, argTypes);
+//     Define("subvar2", "String", sub1,index, args, argTypes);
+//     Define("subvar3", "String", sub2,index, args, argTypes);
+
+//     printf("Printing subroutine table \n");
+//     for(int i=0; i<stCount; i++) {
+//         printf("%s, %s, %i, %i \n", subroutineTable[i].name, subroutineTable[i].type, subroutineTable[i].kind, subroutineTable[i].index);
+//     }
+
+//     // Create new subroutine table
+//     // Start a subroutine
+//     startSubroutine();
+//     Define("newsubvar1", "String", sub2,index, args, argTypes);
+//     Define("newsubvar2", "String", sub1,index, args, argTypes);
+//     Define("newsubvar3", "String", sub2,index, args, argTypes);
+
+//     printf("Printing new subroutine table \n");
+//     for(int i=0; i<stCount; i++) {
+//         printf("%s, %s, %i, %i \n", subroutineTable[i].name, subroutineTable[i].type, subroutineTable[i].kind, subroutineTable[i].index);
+//     }
+
+    
+//     // printf("Printing class table: \n");
+//     // for(int i=0; i<ctCount; i++) {
+//     //     printf("%s, %s, %i, %i \n", classTable[i].name, classTable[i].type, classTable[i].kind, classTable[i].index);
+        
+//     // }
+
+//     return 1;
+
+// }
+
+
 // VARIABLES:
 // Should be declared before using
 // Should be initialised before using it's value

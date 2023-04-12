@@ -16,6 +16,10 @@ Date Work Commenced: 03/04/2023
 
 #include "compiler.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <dirent.h>
+
 
 int InitCompiler ()
 {
@@ -26,10 +30,32 @@ ParserInfo compile (char* dir_name)
 {
 	ParserInfo p;
 
-	// write your code below
+	// Start symbol tables:
+	Constructor();
 
+	struct dirent *de; 
+	 DIR *dr = opendir(dir_name); 
 
-	p.er = none;
+    if (dr == NULL){
+        printf("Could not open current directory");
+    }
+
+    // Referencing each file/folder within the directory
+    while ((de = readdir(dr)) != NULL) {
+		if( (strcmp(de->d_name, ".")!=0) && (strcmp(de->d_name, "..")!= 0)) {
+			char route[128];
+			strcpy(route, dir_name);
+			strcat(route, "/");
+			strcat(route, de->d_name);
+			InitLexer(route);
+			p = Parse();
+			if(p.er != 0) {
+				return p;
+			}
+		}
+	}
+    closedir(dr); 
+	// p.er = none;
 	return p;
 }
 
@@ -45,8 +71,10 @@ int StopCompiler ()
 int main ()
 {
 	InitCompiler ();
-	ParserInfo p = compile ("Pong");
-	PrintError (p);
+	ParserInfo p = compile ("redclarClass");
+	printf("Token: %s, error: %i\n", p.tk.lx, p.er);
+	
+	// PrintError (p);
 	StopCompiler ();
 	return 1;
 }
