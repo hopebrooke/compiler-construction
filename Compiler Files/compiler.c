@@ -29,7 +29,7 @@ int InitCompiler ()
 ParserInfo compile (char* dir_name)
 {
 	ParserInfo p;
-
+	
 	// Start symbol tables:
 	Constructor();
 
@@ -55,27 +55,27 @@ ParserInfo compile (char* dir_name)
 		}
 	}
     closedir(dr); 
-	// p.er = none;
+	
+	p = checkUndec();
 	return p;
 }
 
 int StopCompiler ()
 {
 
-
 	return 1;
 }
 
 
-#ifndef TEST_COMPILER
-int main ()
-{
-	InitCompiler ();
-	ParserInfo p = compile ("redclarClass");
-	printf("Token: %s, error: %i\n", p.tk.lx, p.er);
+// #ifndef TEST_COMPILER
+// int main ()
+// {
+// 	InitCompiler ();
+// 	ParserInfo p = compile ("Square1");
+// 	printf("Token: %s, error: %i, at line: %i\n", p.tk.lx, p.er, p.tk.ln);
 	
-	// PrintError (p);
-	StopCompiler ();
-	return 1;
-}
-#endif
+// 	// PrintError (p);
+// 	StopCompiler ();
+// 	return 1;
+// }
+// #endif

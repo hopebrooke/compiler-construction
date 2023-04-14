@@ -1,3 +1,7 @@
 class A {
     field int v;
+
+    function void bob (int v){
+        let v = 1+1;
+    }
 }

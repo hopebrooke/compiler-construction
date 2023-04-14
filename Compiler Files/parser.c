@@ -6,12 +6,20 @@
 #include "parser.h"
 #include "symbols.h"
 
+
+// Make parameter list struct:
+typedef struct param {
+	char args[50][128];
+	char argTypes[50][128];
+	int num;
+} param;
+
 // Parser Function Declarations
 void memberDeclar();
 void classVarDeclar();
 void type();
 void subroutineDeclar();
-void paramList();
+param paramList();
 void subroutineBody();
 void statement();
 void varDeclarStatement();
@@ -31,7 +39,7 @@ void operand();
 
 // Initialise global ParserInfo struct
 ParserInfo status;
-
+char currentClass[128];
 
 // Function for member declaration checking
 void memberDeclar()
@@ -97,7 +105,15 @@ void classVarDeclar()
 		return;
 	}
 	if(t.tp == 1){
-		// Define(t.lx, typeSymbol, kind);
+		// Check if the identifier already exists
+		int exists = search(t.lx, kind);
+		if(exists) {
+			status.er = redecIdentifier;
+			status.tk = t;
+		} else {
+			char empty[10][128];
+			Define(t.lx, typeSymbol, kind, 1, empty, empty);
+		}
 	}
 	else {
 		status.er = idExpected;
@@ -119,7 +135,15 @@ void classVarDeclar()
 			return;
 		}
 		if(t.tp == 1){
-			// Define(t.lx, typeSymbol, kind);
+			// Check if the identifier already exists
+			int exists = search(t.lx, kind);
+			if(exists) {
+				status.er = redecIdentifier;
+				status.tk = t;
+			} else {
+				char empty[10][128];
+				Define(t.lx, typeSymbol, kind, 1, empty, empty);
+			}
 		}
 		else {
 			status.er = idExpected;
@@ -158,20 +182,18 @@ void type()
 		return;
 	}
 
-	//_______INT/CHAR/BOOL/ID_______
-	if(t.tp == 1);
-	else if (t.tp == 0) {
+	//_______ID_______
+	if(t.tp == 1) {
 		// Check if identifier exists in classes
 		int exists = classExists(t.lx);
 		if( !exists ){
 			// Add to undeclared id list
-			strcpy(undeclaredTable[utCount], t.lx);
-			utCount ++;
+			Token two;
+			addUndec(t, two, 1);
 		}
-	}
-	else if ((!strcmp(t.lx, "int") ||
-		!strcmp(t.lx, "char") || !strcmp(t.lx, "boolean")));
-	else {
+	} else if ((t.tp == 0) && ((!strcmp(t.lx, "int") ||
+		!strcmp(t.lx, "char") || !strcmp(t.lx, "boolean")))){
+	} else {
 		status.er = illegalType;
 		status.tk = t;
 	}
@@ -181,6 +203,13 @@ void type()
 // Function for subroutineDeclar
 void subroutineDeclar()
 {
+	Kind kind;
+	char name[128];
+	char typeSymbol[128];
+	int index;
+	char args[50][128];
+	char argTypes[50][128];
+
 	//___________ CONSTRUCTOR/FUNCTION/METHOD ___________
 	Token t = GetNextToken();
 	if( t.tp == 6 ) {
@@ -188,18 +217,19 @@ void subroutineDeclar()
 		status.tk = t;
 		return;
 	}
-	if( !strcmp(t.lx, "constructor") || !strcmp(t.lx, "function") || !strcmp(t.lx, "method"));
+	if (!strcmp(t.lx, "constructor")){kind = CONSTRUCTOR;} 
+	else if (!strcmp(t.lx, "function")){kind = FUNCTION;} 
+	else if (!strcmp(t.lx, "method")){kind = METHOD;} 
 	else {
 		status.er = subroutineDeclarErr;
 		status.tk = t;
 		return;
 	}
-	// startSubroutine();
-	// Define("this", "get class name",ARG)
-	
 
 	//______ TYPE OR VOID ___________
 	t = PeekNextToken();
+	strcpy(typeSymbol, t.lx);
+
 	if(!(strcmp(t.lx, "void"))) t = GetNextToken();
 	else {
 		type();
@@ -213,7 +243,16 @@ void subroutineDeclar()
 		status.tk = t;
 		return;
 	}
-	if( t.tp == 1);
+	if( t.tp == 1) {
+		// Check if the identifier already exists
+		int exists = search(t.lx, kind);
+		if(exists) {
+			status.er = redecIdentifier;
+			status.tk = t;
+		} else {
+			strcpy(name, t.lx);
+		}
+	}
 	else {
 		status.er = idExpected;
 		status.tk = t;
@@ -235,9 +274,15 @@ void subroutineDeclar()
 	}
 
 	//______ PARAMLIST ______
-	paramList();
+	param parameters = paramList();
 	if( status.er != 0 ) return;
 
+	// If no problem, copy args and argtypes
+	for(int i=0; i<parameters.num; i++){
+		strcpy(args[i], parameters.args[i]);
+		strcpy(argTypes[i], parameters.argTypes[i]);
+	}
+	index = parameters.num;
 	//_________ ) _________
 	t = GetNextToken();
 	if( t.tp == 6 ){
@@ -251,6 +296,15 @@ void subroutineDeclar()
 		status.tk = t;
 		return;
 	}
+	// Add to symbol table:
+	Define(name, typeSymbol, kind, index, args, argTypes);
+	// Start subroutine:
+	startSubroutine();
+	// Add parameters as arguments:
+	char emptyArgs[50][128];
+	for(int i=0; i<parameters.num; i++){
+		Define(parameters.args[i], parameters.argTypes[i], ARG, i, emptyArgs, emptyArgs);
+	}
 
 	//______ SUBROUTINEBODY ______
 	subroutineBody();
@@ -259,27 +313,32 @@ void subroutineDeclar()
 
 
 // Function for parameter list
-void paramList()
-{
+param paramList(){
+	param parameters;
+	parameters.num = 0;
 	Token t = PeekNextToken();
 	if( !strcmp(t.lx, "int") || !strcmp(t.lx, "char") || !strcmp(t.lx, "boolean") || (t.tp == 1)) {
 		
+		strcpy(parameters.argTypes[parameters.num], t.lx);
 		//________ TYPE ____________
 		type();
-		if( status.er != 0) return;
+		if( status.er != 0) return parameters;
 
 		//_______ IDENTIFIER ________
 		t = GetNextToken();
 		if( t.tp == 6 ) {
 			status.er = lexerErr;
 			status.tk = t;
-			return;
+			return parameters;
 		}
-		if( t.tp == 1 );
+		if( t.tp == 1 ) {
+			strcpy(parameters.args[parameters.num], t.lx);
+			parameters.num ++;
+		}
 		else {
 			status.er = idExpected;
 			status.tk = t;
-			return;
+			return parameters;
 		}
 
 		//_________ {, TYPE IDENTIFIER}_________
@@ -291,24 +350,31 @@ void paramList()
 			if( t.tp == 6 ){
 				status.er = lexerErr;
 				status.tk = t;
-				return;
+				return parameters;
 			}
+			t = PeekNextToken();
+			strcpy(parameters.argTypes[parameters.num], t.lx);
+		
 			//______ TYPE ______
 			type();
-			if( status.er != 0) return;
+			if( status.er != 0) return parameters;
 
 			//______ IDENTIFIER ______
 			t = GetNextToken();
 			if( t.tp == 6 ){
 				status.er = lexerErr;
 				status.tk = t;
-				return;
+				return parameters;
 			}
-			if( t.tp == 1 );
+			if( t.tp == 1 ){
+				strcpy(parameters.args[parameters.num], t.lx);
+				parameters.num ++;
+		
+			}
 			else {
 				status.er = idExpected;
 				status.tk = t;
-				return;
+				return parameters;
 			}
 
 			//______ , ______
@@ -318,6 +384,7 @@ void paramList()
 		}
 	}
 	// If no type, then just return to previous function
+	return parameters;
 }
 
 
@@ -413,6 +480,11 @@ void statement()
 // Function for variable declaration statements
 void varDeclarStatement()
 {
+	char typeSymbol[128];
+	char name[128];
+	char args[50][128];
+	Kind kind = VAR;
+
 	Token t = GetNextToken();
 	if ( t.tp == 6 ){
 		status.er = lexerErr;
@@ -428,6 +500,8 @@ void varDeclarStatement()
 		return;
 	}
 
+	t = PeekNextToken();
+	strcpy(typeSymbol, t.lx);  
 	//______ TYPE ______
 	type();
 	if( status.er != 0 ) return;
@@ -439,7 +513,16 @@ void varDeclarStatement()
 		status.tk = t;
 		return;
 	}
-	if( t.tp == 1 );
+	if( t.tp == 1 ) {
+		int exists = search(t.lx, kind);
+		if(exists){
+			status.er = redecIdentifier;
+			status.tk = t;
+			return;
+		} else {
+			Define(t.lx, typeSymbol, kind, 0, args, args);
+		}
+	}
 	else {
 		status.er = idExpected;
 		status.tk = t;
@@ -460,7 +543,16 @@ void varDeclarStatement()
 			status.tk = t;
 			return;
 		}
-		if( t.tp == 1 );
+		if( t.tp == 1 ){
+			int exists = search(t.lx, kind);
+			if(exists){
+				status.er = redecIdentifier;
+				status.tk = t;
+				return;
+			} else {
+				Define(t.lx, typeSymbol, kind, 0, args, args);
+			}
+		}
 		else {
 			status.er = idExpected;
 			status.tk = t;
@@ -499,7 +591,7 @@ void letStatement()
 		status.tk = t;
 		return;
 	}
-	if( (t.tp == 0) && (!strcmp(t.lx, "let")));
+	if( (t.tp == 0) && (!strcmp(t.lx, "let"))) {}
 	else {
 		status.er = syntaxError;
 		status.tk = t;
@@ -513,7 +605,15 @@ void letStatement()
 		status.tk = t;
 		return;
 	}
-	if( t.tp == 1 );
+	if( t.tp == 1 ){
+		//check if exists:
+		int index = IndexOf(t.lx);
+		if(index == -1) {
+			status.er = undecIdentifier;
+			status.tk = t;
+			return;
+		}
+	}
 	else {
 		status.er = idExpected;
 		status.tk = t;
@@ -879,6 +979,8 @@ void doStatement()
 // Function for subroutine call
 void subroutineCall()
 {
+	Token one;
+	Token two;
 	Token t = GetNextToken();
 	if( t.tp == 6){
 		status.er = lexerErr;
@@ -886,7 +988,18 @@ void subroutineCall()
 		return;
 	}
 	//______IDENTIFIER______
-	if( t.tp == 1);
+	if( t.tp == 1) {
+		one = t;
+		int index = IndexOf(t.lx);
+		if(index==-1) {
+			int cExists = classExists(t.lx);
+			if(!cExists) {
+				strcpy(two.lx, currentClass);
+				addUndec(one, two, 1);
+			}
+		}
+		
+	}
 	else{
 		status.er = idExpected;
 		status.tk = t;
@@ -910,7 +1023,16 @@ void subroutineCall()
 		}
 
 		//______IDENTIFIER______
-		if( t.tp == 1);
+		if( t.tp == 1){
+			// add '.identifier' to undeclared for later checking
+			two = t;
+			// If already declared, pass 'type of' one
+			int index = IndexOf(one.lx);
+			if(index != -1) {
+				strcpy(one.lx, TypeOf(one.lx));
+			}
+			addUndec(one, two, 2);
+		}
 		else{
 			status.er = idExpected;
 			status.tk = t;
@@ -1126,7 +1248,10 @@ void factor()
 // Function for operand
 void operand()
 {
+	Token one;
+	Token two;
 	Token t = GetNextToken();
+
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
@@ -1136,6 +1261,16 @@ void operand()
 	if( t.tp == 2){;}
 	//_______IDENTIFIER________
 	else if( t.tp == 1 ){
+		one = t;
+		int index = IndexOf(t.lx);
+		// if not there, check class names:
+		if( index == -1) {
+			int cExists = classExists(t.lx);
+			if( !cExists) {
+				addUndec(one, two, 1);
+			}
+		} 
+		
 		//______ . ______
 		t = PeekNextToken();
 		if( (t.tp == 3) && (t.lx[0] == '.')){
@@ -1147,7 +1282,10 @@ void operand()
 				status.tk = t;
 				return;
 			}
-			if( t.tp == 1);
+			if( t.tp == 1) {
+				two = t;
+				addUndec(one, two, 2);
+			}
 			else {
 				status.er = idExpected;
 				status.tk = t;
@@ -1267,6 +1405,7 @@ ParserInfo Parse ()
 	}
 	if( t.tp == 1) {
 		// Check if class exists:
+		strcpy(currentClass, t.lx);
 		int exists = classExists(t.lx);
 		if(exists) {
 			status.er = redecIdentifier;

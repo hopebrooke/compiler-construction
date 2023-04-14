@@ -23,6 +23,8 @@ Date Work Commenced: 03/04/2023
 // Need to create list of all identifiers and attributes
 // Must facilitate searching for a symbol in the tables
 // And inserting a symbol into the table
+char emptyArgs[10][128] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
+char emptyArgTypes[10][128] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
 
 
 // Initialise class symbol table
@@ -30,6 +32,25 @@ int Constructor() {
     ptCount = 0;
     stCount = 0;
     utCount = 0;
+
+    ParserInfo p;
+    InitLexer("Sys.jack");
+    p = Parse();
+	InitLexer("String.jack");
+    p = Parse();
+	InitLexer("Screen.jack");
+    p = Parse();
+	InitLexer("Output.jack");
+    p = Parse();
+	InitLexer("Memory.jack");
+    p = Parse();
+	InitLexer("Math.jack");
+    p = Parse();
+	InitLexer("Keyboard.jack");
+    p = Parse();
+	InitLexer("Array.jack");
+    p = Parse();
+	
     return 1;
 }
 
@@ -75,8 +96,26 @@ int Define(char* name, char* type, Kind kind, int index, char args[10][128], cha
         programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].kind = kind;
         strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].name, name);
         strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].type, type);
-        programTable[ptCount-1 ].ctCount ++;
+        programTable[ptCount-1].ctCount ++;
     }
+}
+
+int search (char* name, Kind kind){
+    // int exists = 0;
+    if((kind==2) || (kind ==3)) {
+        for( int i =0; i <stCount; i++){
+            if(!strcmp(subroutineTable[i].name, name)){
+                return 1;
+            }
+        }
+    } else {
+        for(int i = 0; i < programTable[ptCount-1].ctCount; i++){
+            if(!strcmp(programTable[ptCount-1].classTable[i].name, name)){
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 // Count number of that kind
@@ -94,6 +133,27 @@ int VarCount(Kind kind){
         }
     }
     return count;
+}
+
+int addUndec(Token one, Token two, int count) {
+    int found=0;
+    for(int i=0; i<utCount; i++) {
+        if(!strcmp(one.lx, undeclaredTable[i].first.lx)){
+            if(count == 2) {
+                if(!strcmp(two.lx, undeclaredTable[i].second.lx)){
+                    found = 1;
+                }
+            } else {
+                found = 1;
+            }
+        }
+    }
+    if( found == 0){
+        undeclaredTable[utCount].first = one;
+        undeclaredTable[utCount].second = two;
+        undeclaredTable[utCount].count = count;
+        utCount ++;
+    }
 }
 
 // Returns the kind of symbol of named identifier
@@ -122,7 +182,7 @@ char* TypeOf(char* name){
     char * type = "-1";
     // First search subroutine table:
     for(int i=0; i<stCount; i++){
-        if(strcmp(subroutineTable[i].name, name)){
+        if(!strcmp(subroutineTable[i].name, name)){
             return subroutineTable[i].type;
         }
     }
@@ -130,7 +190,7 @@ char* TypeOf(char* name){
     // If not found in subroutine, repeat for class
     // First search subroutine table:
     for(int i=0; i<programTable[ptCount-1].ctCount; i++){
-        if(strcmp(programTable[ptCount-1].classTable[i].name, name)){
+        if(!strcmp(programTable[ptCount-1].classTable[i].name, name)){
             return programTable[ptCount-1].classTable[i].type;
         }
     }
@@ -144,7 +204,7 @@ int IndexOf(char* name){
     int index = -1;
    // First search subroutine table:
     for(int i=0; i<stCount; i++){
-        if(strcmp(subroutineTable[i].name, name)){
+        if(!strcmp(subroutineTable[i].name, name)){
             return subroutineTable[i].index;
         }
     }
@@ -152,7 +212,7 @@ int IndexOf(char* name){
     // If not found in subroutine, repeat for class
     // First search subroutine table:
     for(int i=0; i<programTable[ptCount-1].ctCount; i++){
-        if(strcmp(programTable[ptCount-1].classTable[i].name, name)){
+        if(!strcmp(programTable[ptCount-1].classTable[i].name, name)){
             return programTable[ptCount-1].classTable[i].index;
         }
     }
@@ -169,7 +229,93 @@ int classExists(char* name){
     return 0;
 }
 
+ParserInfo checkUndec() {
+    
+    ParserInfo p;
+    p.er = none;
+    
+    // Loop through undeclared:
+    for( int i=0; i<utCount; i++ ){
+        if(undeclaredTable[i].count == 1){
+            int found = 0;
+            int exists = classExists(undeclaredTable[i].first.lx);
+            if(exists) {
+                found = 1;
+            }
+            
+            if( classExists(undeclaredTable[i].second.lx)){
+                for(int j=0; j<ptCount; j++){
+                    if(!strcmp(programTable[j].name, undeclaredTable[i].second.lx)) {
+                        for(int k=0; k<programTable[j].ctCount; k++) {
+                            if(!strcmp(programTable[j].classTable[k].name, undeclaredTable[i].first.lx)){
+                                found = 1;
+                                break;     
+                            }
+                        }
+                    }
+                    if(found == 1){
+                        break;
+                    }
+                }               
+            } if( found == 0){
+                p.er = undecIdentifier;
+                p.tk = undeclaredTable[i].first;
+                return p;
+            }
 
+        } else {
+            int found = 0;
+            // Check if a class:
+            if(classExists(undeclaredTable[i].first.lx)) {
+                // If a class, check that second token is a function or constructor
+                for(int j=0; j<ptCount; j++){
+                    if(!strcmp(programTable[j].name, undeclaredTable[i].first.lx)) {
+                        for(int k=0; k<programTable[j].ctCount; k++) {
+                            if(!strcmp(programTable[j].classTable[k].name, undeclaredTable[i].second.lx)){
+                                found = 1;
+                                break;
+                            
+                            }
+                        }
+                    }
+                    if(found == 1){
+                        break;
+                    }
+                }
+                if( found == 0){
+                    p.tk = undeclaredTable[i].second;
+                    p.er = undecIdentifier;
+                    return p;
+                }
+            } else {
+                // If not class, then should be object
+                char * objectType;
+                objectType = TypeOf(undeclaredTable[i].first.lx);
+                for(int j=0; j<ptCount; j++){
+                    if(!strcmp(programTable[j].name, objectType)) {
+                        for(int k=0; k<programTable[j].ctCount; k++) {
+                            if(!strcmp(programTable[j].classTable[k].name, undeclaredTable[i].second.lx)){
+                                found = 1;
+                                break;
+                            }
+                        }
+                    }
+                    if(found == 1) {
+                        break;
+                    }
+                }
+                if( found == 0){
+                    p.tk = undeclaredTable[i].second;
+                    p.er = undecIdentifier;
+                    return p;
+                }
+
+            }
+
+        }
+    }
+    return p;
+}
 // int main() {
 
 //     // Initialise
@@ -261,25 +407,4 @@ int classExists(char* name){
 //     return 1;
 
 // }
-
-
-// VARIABLES:
-// Should be declared before using
-// Should be initialised before using it's value
-// Scope resolution
-
-// TYPE CHECKING:
-// RHS vs. LHS types must be compatable
-// Corecion/casting
-// Expressions used as array indices must be integers
-
-// FUNCTION CALLING:
-// Has to be declared before called
-// Must have same number and type of declarations as declaration
-// Returns value compatable with return type
-// All paths in a function should return a value
-
-// OTHER:
-// Deal with unreachable code
-
 
