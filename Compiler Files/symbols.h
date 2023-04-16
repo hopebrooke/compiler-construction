@@ -29,12 +29,12 @@ typedef struct undeclared {
 
 typedef struct classTable {
     char name[128];
-    symbol classTable[128];
+    symbol classTable[1000];
     int ctCount;
     //memmory size needed?
 } classTable;
 
-undeclared undeclaredTable[500];
+undeclared undeclaredTable[1000];
 int utCount;
 classTable programTable[128];
 // Program table is an array of class tables

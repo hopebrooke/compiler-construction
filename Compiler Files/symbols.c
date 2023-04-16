@@ -270,9 +270,12 @@ ParserInfo checkUndec() {
                 // If a class, check that second token is a function or constructor
                 for(int j=0; j<ptCount; j++){
                     if(!strcmp(programTable[j].name, undeclaredTable[i].first.lx)) {
+                        // printf("Table: %s, count: %i\n", programTable[j].name, programTable[j].ctCount);
                         for(int k=0; k<programTable[j].ctCount; k++) {
+                            // printf("%s \n", programTable[j].classTable[k].name);
                             if(!strcmp(programTable[j].classTable[k].name, undeclaredTable[i].second.lx)){
                                 found = 1;
+                                // printf("found: %s\n", programTable[j].classTable[k].name);
                                 break;
                             
                             }

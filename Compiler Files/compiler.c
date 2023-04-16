@@ -29,7 +29,8 @@ int InitCompiler ()
 ParserInfo compile (char* dir_name)
 {
 	ParserInfo p;
-	
+	p.er = none;
+
 	// Start symbol tables:
 	Constructor();
 
@@ -50,14 +51,17 @@ ParserInfo compile (char* dir_name)
 			InitLexer(route);
 			p = Parse();
 			if(p.er != 0) {
-				return p;
+				break;
 			}
 		}
 	}
     closedir(dr); 
 	
-	p = checkUndec();
+	if(p.er == 0) {
+		p = checkUndec();
+	}
 	return p;
+
 }
 
 int StopCompiler ()
@@ -71,7 +75,7 @@ int StopCompiler ()
 // int main ()
 // {
 // 	InitCompiler ();
-// 	ParserInfo p = compile ("Square1");
+// 	ParserInfo p = compile ("Pong");
 // 	printf("Token: %s, error: %i, at line: %i\n", p.tk.lx, p.er, p.tk.ln);
 	
 // 	// PrintError (p);
