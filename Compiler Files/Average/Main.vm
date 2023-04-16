@@ -1,0 +1,7 @@
+push constant 4
+push this 3
+add
+goto here
+call what 3
+function func 7
+pop local 17
