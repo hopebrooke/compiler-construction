@@ -1675,7 +1675,7 @@ int StopParser ()
 	return 1;
 }
 
-// #ifndef TEST_PARSER
+#ifndef TEST_PARSER
 // int main ()
 // {
 // 	InitLexer("semicolonExpected.jack");
@@ -1687,4 +1687,4 @@ int StopParser ()
 
 // 	return 1;
 // }
-// #endif
+#endif

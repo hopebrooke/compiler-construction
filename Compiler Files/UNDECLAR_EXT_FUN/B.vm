@@ -1,3 +1,2 @@
 function B.F 0
-push pointer 0
 call A.N 0

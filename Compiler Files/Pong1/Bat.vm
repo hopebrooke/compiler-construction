@@ -9,32 +9,28 @@ push argument 3
 pop argument 3
 push constant 2
 pop argument 4
-push pointer 0
 call Bat.show 0
 push pointer 0
 return
 function Bat.dispose 0
 push pointer 0
-push pointer 0
 call Memory.deAlloc 1
+push constant 0
 return
 function Bat.show 0
-push pointer 0
 push constant 1
 neg
 call Screen.setColor 1
-push pointer 0
 call Bat.draw 0
+push constant 0
 return
 function Bat.hide 0
-push pointer 0
 push constant 0
 call Screen.setColor 1
-push pointer 0
 call Bat.draw 0
+push constant 0
 return
 function Bat.draw 0
-push pointer 0
 push this 0
 push this 1
 push this 0
@@ -44,10 +40,12 @@ push this 1
 push this 3
 add
 call Screen.drawRectangle 4
+push constant 0
 return
 function Bat.setDirection 1
 push this 0
 pop argument 4
+push constant 0
 return
 function Bat.getLeft 0
 push this 0
@@ -58,12 +56,11 @@ push this 2
 add
 return
 function Bat.setWidth 1
-push pointer 0
 call Bat.hide 0
 push this 0
 pop argument 2
-push pointer 0
 call Bat.show 0
+push constant 0
 return
 function Bat.move 0
 push this 4
@@ -85,10 +82,8 @@ if-goto IF_TRUE1
 goto IF_FALSE1
 label IF_TRUE1
 label IF_FALSE1
-push pointer 0
 push constant 0
 call Screen.setColor 1
-push pointer 0
 push this 0
 push this 2
 add
@@ -104,11 +99,9 @@ push this 1
 push this 3
 add
 call Screen.drawRectangle 4
-push pointer 0
 push constant 1
 neg
 call Screen.setColor 1
-push pointer 0
 push this 0
 push this 1
 push this 0
@@ -136,10 +129,8 @@ if-goto IF_TRUE2
 goto IF_FALSE2
 label IF_TRUE2
 label IF_FALSE2
-push pointer 0
 push constant 0
 call Screen.setColor 1
-push pointer 0
 push this 0
 push constant 4
 sub
@@ -151,11 +142,9 @@ push this 1
 push this 3
 add
 call Screen.drawRectangle 4
-push pointer 0
 push constant 1
 neg
 call Screen.setColor 1
-push pointer 0
 push this 0
 push this 2
 add
@@ -169,4 +158,5 @@ push this 1
 push this 3
 add
 call Screen.drawRectangle 4
+push constant 0
 return

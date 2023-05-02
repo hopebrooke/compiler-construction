@@ -275,7 +275,13 @@ ParserInfo checkUndec() {
             } else {
                 // If not class, then should be object
                 char * objectType;
+
+        
                 objectType = TypeOf(undeclaredTable[i].first.lx);
+
+                printf("%s, %s, %i\n", undeclaredTable[i].first.lx, undeclaredTable[i].second.lx, undeclaredTable[i].count);
+                printf("%s\n", objectType);
+                
                 for(int j=0; j<ptCount; j++){
                     if(!strcmp(programTable[j].name, objectType)) {
                         for(int k=0; k<programTable[j].ctCount; k++) {

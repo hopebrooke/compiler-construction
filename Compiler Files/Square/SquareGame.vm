@@ -9,17 +9,15 @@ pop this 1
 push pointer 0
 return
 function SquareGame.dispose 0
-push pointer 0
 call Square.dispose 0
 push pointer 0
-push pointer 0
 call Memory.deAlloc 1
+push constant 0
 return
 function SquareGame.moveSquare 0
 push this 1
 push constant 1
 eq
-push pointer 0
 call Square.moveUp 0
 if-goto IF_TRUE0
 goto IF_FALSE0
@@ -28,7 +26,6 @@ label IF_FALSE0
 push this 1
 push constant 2
 eq
-push pointer 0
 call Square.moveDown 0
 if-goto IF_TRUE1
 goto IF_FALSE1
@@ -37,7 +34,6 @@ label IF_FALSE1
 push this 1
 push constant 3
 eq
-push pointer 0
 call Square.moveLeft 0
 if-goto IF_TRUE2
 goto IF_FALSE2
@@ -46,15 +42,14 @@ label IF_FALSE2
 push this 1
 push constant 4
 eq
-push pointer 0
 call Square.moveRight 0
 if-goto IF_TRUE3
 goto IF_FALSE3
 label IF_TRUE3
 label IF_FALSE3
-push pointer 0
 push constant 5
 call Sys.wait 1
+push constant 0
 return
 function SquareGame.run 0
 push constant 0
@@ -71,7 +66,6 @@ not
 if-goto WHILE_END1
 call Keyboard.keyPressed 0
 pop local 0
-push pointer 0
 call SquareGame.moveSquare 0
 goto WHILE_EXP1
 label WHILE_END1
@@ -88,7 +82,6 @@ label IF_FALSE0
 push local 0
 push constant 90
 eq
-push pointer 0
 call Square.decSize 0
 if-goto IF_TRUE1
 goto IF_FALSE1
@@ -97,7 +90,6 @@ label IF_FALSE1
 push local 0
 push constant 88
 eq
-push pointer 0
 call Square.incSize 0
 if-goto IF_TRUE2
 goto IF_FALSE2
@@ -147,10 +139,10 @@ not
 if-goto WHILE_END2
 call Keyboard.keyPressed 0
 pop local 0
-push pointer 0
 call SquareGame.moveSquare 0
 goto WHILE_EXP2
 label WHILE_END2
 goto WHILE_EXP0
 label WHILE_END0
+push constant 0
 return
