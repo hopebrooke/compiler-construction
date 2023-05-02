@@ -1,0 +1,5 @@
+function PongGame.new 0
+push pointer 0
+call Screen.clearScreen 0
+push constant 50
+pop static 6

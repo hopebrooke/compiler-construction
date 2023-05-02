@@ -1,0 +1,3 @@
+function B.f 0
+call a.M 0
+pop this 0

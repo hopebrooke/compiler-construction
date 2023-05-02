@@ -36,13 +36,45 @@ ParserInfo compile (char* dir_name)
 	// Start symbol tables:
 	Constructor();
 
+	InitLexer("Sys.jack");
+    fp = fopen("Sys.vm", "w");
+    p = Parse();
+	fclose(fp);
+	InitLexer("String.jack");
+    fp = fopen("String.vm", "w");
+    p = Parse();
+	fclose(fp);
+	InitLexer("Screen.jack");
+    fp = fopen("Screen.vm", "w");
+    p = Parse();
+	fclose(fp);
+	InitLexer("Output.jack");
+   	fp = fopen("Output.vm", "w");
+    p = Parse();
+	fclose(fp);
+	InitLexer("Memory.jack");
+   	fp = fopen("Memory.vm", "w");
+    p = Parse();
+	fclose(fp);
+	InitLexer("Math.jack");
+   	fp = fopen("Math.vm", "w");
+    p = Parse();
+	fclose(fp);
+	InitLexer("Keyboard.jack");
+   	fp = fopen("Keyboard.vm", "w");
+    p = Parse();
+	fclose(fp);
+	InitLexer("Array.jack");
+    fp = fopen("Array.vm", "w");
+    p = Parse();
+	fclose(fp);
+
 	struct dirent *de; 
-	 DIR *dr = opendir(dir_name); 
+	DIR *dr = opendir(dir_name); 
 
     if (dr == NULL){
         printf("Could not open current directory");
     }
-
 
     // Referencing each file/folder within the directory
     while ((de = readdir(dr)) != NULL) {
@@ -61,15 +93,9 @@ ParserInfo compile (char* dir_name)
 			}
 			strcat(fileName, ".vm");
 			fp = fopen(fileName, "w");
-			writePush(CONST, 4);
-			writePush(THIS, 3);
-			writeArithmetic(ADD);
-			writeGoto("here");
-			writeCall("what", 3);
-			writeFunction("func", 7);
-			writePop(LOC, 17);
-			fclose(fp);
 			p = Parse();
+
+			fclose(fp);
 			if(p.er != 0) {
 				break;
 			}
@@ -198,6 +224,9 @@ int writeFunction(char* name, int nLocals) {
 	fputs(line, fp);
 }
 
+int writeReturn() {
+	fputs("return\n", fp);
+}
 
 
 

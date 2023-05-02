@@ -1,0 +1,5 @@
+function A.M 0
+push local 1
+pop local 0
+push pointer 0
+call A.Sub 0

@@ -1,0 +1,7 @@
+function Math.init 0
+function Math.abs 1
+function Math.multiply 2
+function Math.divide 2
+function Math.sqrt 1
+function Math.max 2
+function Math.min 2

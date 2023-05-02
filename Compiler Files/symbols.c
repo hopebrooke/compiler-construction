@@ -32,24 +32,6 @@ int Constructor() {
     ptCount = 0;
     stCount = 0;
     utCount = 0;
-
-    ParserInfo p;
-    InitLexer("Sys.jack");
-    p = Parse();
-	InitLexer("String.jack");
-    p = Parse();
-	InitLexer("Screen.jack");
-    p = Parse();
-	InitLexer("Output.jack");
-    p = Parse();
-	InitLexer("Memory.jack");
-    p = Parse();
-	InitLexer("Math.jack");
-    p = Parse();
-	InitLexer("Keyboard.jack");
-    p = Parse();
-	InitLexer("Array.jack");
-    p = Parse();
 	
     return 1;
 }

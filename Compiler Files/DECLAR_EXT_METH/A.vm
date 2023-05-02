@@ -1,0 +1,6 @@
+function A.M 0
+push constant 100
+pop that 0
+push constant 1
+add
+return

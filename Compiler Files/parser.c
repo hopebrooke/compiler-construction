@@ -5,7 +5,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "symbols.h"
-
+#include "compiler.h"
 
 // Make parameter list struct:
 typedef struct param {
@@ -28,7 +28,7 @@ void ifStatement();
 void whileStatement();
 void doStatement();
 void subroutineCall();
-void expressionList();
+int expressionList();
 void returnStatement();
 void expression();
 void relationalExpression();
@@ -40,6 +40,8 @@ void operand();
 // Initialise global ParserInfo struct
 ParserInfo status;
 char currentClass[128];
+int ifNum;
+int whileNum;
 
 // Function for member declaration checking
 void memberDeclar()
@@ -203,6 +205,8 @@ void type()
 // Function for subroutineDeclar
 void subroutineDeclar()
 {
+	ifNum = 0;
+	whileNum = 0;
 	Kind kind;
 	char name[128];
 	char typeSymbol[128];
@@ -298,6 +302,12 @@ void subroutineDeclar()
 	}
 	// Add to symbol table:
 	Define(name, typeSymbol, kind, index, args, argTypes);
+	char funcName[128] = "";
+	strcat(funcName, currentClass);
+	strcat(funcName, ".");
+	strcat(funcName, name);
+	writeFunction(funcName, index);
+
 	// Start subroutine:
 	startSubroutine();
 	// Add parameters as arguments:
@@ -605,9 +615,13 @@ void letStatement()
 		status.tk = t;
 		return;
 	}
+	Kind kind;
+	int index;
 	if( t.tp == 1 ){
 		//check if exists:
-		int index = IndexOf(t.lx);
+		index = IndexOf(t.lx);
+		//Get kind:
+		kind = KindOf(t.lx);
 		if(index == -1) {
 			status.er = undecIdentifier;
 			status.tk = t;
@@ -631,7 +645,18 @@ void letStatement()
 		t = GetNextToken();
 		expression();
 		if( status.er != 0 ) return;
-
+		
+		if(kind == STATIC) {
+			writePush(STAT, index);
+		} else if (kind == FIELD) {
+			writePush(THIS, index);
+		} else if (kind == ARG) {
+			writePush(ARGU, index);
+		} else if (kind == VAR) {
+			writePush(LOC, index);
+		}
+		kind = NONE;
+		writeArithmetic(ADD);
 		//______ ] ______
 		t = GetNextToken();
 		if( t.tp == 6){
@@ -678,6 +703,21 @@ void letStatement()
 		status.er = semicolonExpected;
 		status.tk = t;
 		return;
+	}
+
+	if(kind == STATIC) {
+		writePop(STAT, index);
+	} else if (kind == FIELD) {
+		writePop(THIS, index);
+	} else if (kind == ARG) {
+		writePop(ARGU, index);
+	} else if (kind == VAR) {
+		writePop(LOC, index);
+	} else {
+		writePop(TEMP, 0);
+		writePop(POINTER, 1);
+		writePush(TEMP, 0);
+		writePop(THAT, 0);
 	}
 }
 
@@ -750,6 +790,19 @@ void ifStatement()
 	statement();
 	if( status.er != 0 ) return;
 
+	char ifTrue[128] = "IF_TRUE";
+	char ifFalse[128] = "IF_FALSE";
+
+	char numString[128];
+	sprintf(numString, "%d", ifNum);
+	strcat(ifTrue, numString);
+	strcat(ifFalse, numString);
+
+	writeIf(ifTrue);
+	writeGoto(ifFalse);
+	ifNum ++;
+
+	writeLabel(ifTrue);
 	//______ {STATEMENT} ______
 	t = PeekNextToken();
 	int loop = 0;
@@ -779,6 +832,7 @@ void ifStatement()
 		return;
 	}
 
+	writeLabel(ifFalse);
 	//______ [ELSE] ______
 	t = PeekNextToken();
 	if( t.tp == 6){
@@ -836,6 +890,7 @@ void ifStatement()
 			return;
 		}
 	}
+	
 }
 
 
@@ -850,12 +905,24 @@ void whileStatement()
 		return;
 	}
 
+	char whileExpression[128] = "WHILE_EXP";
+	char whileEnd[128] = "WHILE_END";
+
+	char numString[128];
+	sprintf(numString, "%d", whileNum);
+	strcat(whileExpression, numString);
+	strcat(whileEnd, numString);
+
+	whileNum ++;
+
 	if( (t.tp == 0) && !strcmp(t.lx, "while"));
 	else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
 	}
+
+	writeLabel(whileExpression);
 
 	//______ ( ______
 	t = GetNextToken();
@@ -888,7 +955,8 @@ void whileStatement()
 		status.tk = t;
 		return;
 	}
-
+	writeArithmetic(NOT);
+	writeIf(whileEnd);
 	//______ { ______
 	t = GetNextToken();
 	if( t.tp == 6){
@@ -935,6 +1003,8 @@ void whileStatement()
 		status.tk = t;
 		return;
 	}
+	writeGoto(whileExpression);
+	writeLabel(whileEnd);
 
 }
 
@@ -982,6 +1052,8 @@ void subroutineCall()
 	Token one;
 	Token two;
 	Token t = GetNextToken();
+	int idCount = 0;
+	char firstId[128];
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
@@ -991,6 +1063,7 @@ void subroutineCall()
 	if( t.tp == 1) {
 		one = t;
 		int index = IndexOf(t.lx);
+		strcpy(firstId, one.lx);
 		if(index==-1) {
 			int cExists = classExists(t.lx);
 			if(!cExists) {
@@ -1026,6 +1099,7 @@ void subroutineCall()
 		if( t.tp == 1){
 			// add '.identifier' to undeclared for later checking
 			two = t;
+			idCount = 1;
 			// If already declared, pass 'type of' one
 			int index = IndexOf(one.lx);
 			if(index != -1) {
@@ -1053,12 +1127,12 @@ void subroutineCall()
 		status.tk = t;
 		return;
 	}
-
+	int expressions;
 	//______ EXPRESSION LIST ______
 	t = PeekNextToken();
-	if( (t.tp == 3) && (t.lx[0] == ')'));
+	if( (t.tp == 3) && (t.lx[0] == ')')) expressions = 0;
 	else {
-		expressionList();
+		expressions = expressionList();
 		if( status.er != 0) return;
 	}
 
@@ -1075,19 +1149,34 @@ void subroutineCall()
 		status.tk = t;
 		return;
 	}
+
+	char funcCall[128] = "";
+	if(idCount == 0) {
+		strcpy(funcCall, currentClass);
+		strcat(funcCall, ".");
+		strcat(funcCall, firstId);
+	} else {
+		strcpy(funcCall, one.lx);
+		strcat(funcCall, ".");
+		strcat(funcCall, two.lx);
+	}
+	writeCall(funcCall, expressions);
 }
 
 
 // Function for expression list
-void expressionList() 
+int expressionList() 
 {
+	int numExpressions = 0;
+
 	//______ ) ______
 	Token t = PeekNextToken();
-	if( (t.tp == 3) && (t.lx[0] == ')')) return;
+	if( (t.tp == 3) && (t.lx[0] == ')')) return 0;
 
 	//_____ EXPRESSION ______
 	expression();
-	if(status.er != 0) return;
+	if(status.er != 0) return 0;
+	numExpressions ++;
 
 	//______ {, EXPRESSION} ______
 	t = PeekNextToken();
@@ -1096,7 +1185,8 @@ void expressionList()
 	while (loop){
 		t = GetNextToken();
 		expression();
-		if(status.er != 0 ) return;
+		numExpressions ++;
+		if(status.er != 0 ) return 0;
 
 		t = PeekNextToken();
 		if((t.tp == 3) && (t.lx[0] == ','));
@@ -1104,6 +1194,7 @@ void expressionList()
 			loop = 0;
 		}
 	}
+	return numExpressions;
 }
 
 
@@ -1126,7 +1217,9 @@ void returnStatement()
 
 	//______ ; | EXPRESSION ______
 	t = PeekNextToken();
-	if( (t.tp == 3) && (t.lx[0] == ';'));
+	if( (t.tp == 3) && (t.lx[0] == ';')) {
+		writePush(CONST, 0);
+	}
 	else if ((t.tp == 0) || (t.tp == 1) || (t.tp == 2) || (t.tp == 4) || ((t.tp == 3)&&(t.lx[0] == '(')) ){
 		expression();
 		if( status.er != 0) return;
@@ -1138,6 +1231,7 @@ void returnStatement()
 		status.tk = t;
 		return;
 	}
+	writeReturn();
 }
 
 
@@ -1152,14 +1246,26 @@ void expression()
 	//______ {(& | |) RELATIONAL EXPRESSION} ______
 	t = PeekNextToken();
 	int loop = 0;
-	if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|') )) loop = 1;
+	char relEx;
+	if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|') )){
+		relEx = t.lx[0];
+		loop = 1;
+	}
 	while (loop)
 	{
 		t = GetNextToken();
 		t = PeekNextToken();
 		relationalExpression();
 		if( status.er != 0) return;
-		if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|')));
+
+		if(relEx == '&'){
+			writeArithmetic(AND);
+		} else {
+			writeArithmetic(OR);
+		}
+		if( (t.tp == 3) && ((t.lx[0] == '&') || (t.lx[0] == '|'))){
+			relEx = t.lx[0];
+		}
 		else loop = 0;
 	}
 }
@@ -1176,13 +1282,27 @@ void relationalExpression()
 	//______ {(=|<|>) ARITHMETIC EXPRESSION} ______
 	t = PeekNextToken();
 	int loop = 0;
-	if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>') )) loop = 1;
+	char arithEx;
+	if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>') )) {
+		loop = 1;
+		arithEx = t.lx[0];
+	}
 	while (loop){
 		t = GetNextToken();
 		t = PeekNextToken();
 		arithmeticExpression();
+
+		if(arithEx == '=') {
+			writeArithmetic(EQ);
+		} else if (arithEx == '<') {
+			writeArithmetic(LT);
+		} else {
+			writeArithmetic(GT);
+		}
 		if( status.er != 0) return;
-		if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>')));
+		if( (t.tp == 3) && ( (t.lx[0] == '=') || (t.lx[0] == '<') || (t.lx[0] == '>'))){
+			arithEx = t.lx[0];
+		}
 		else loop = 0;
 	}
 }
@@ -1191,19 +1311,30 @@ void relationalExpression()
 // Function for arithmetic expression
 void arithmeticExpression()
 {	
+	char addSub;
 	//______ TERM ______
 	term();
 	if( status.er != 0) return;
 	//______ {(+ | -) TERM} ______
 	Token t = PeekNextToken();
 	int loop = 0;
-	if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') ))loop = 1;
+	if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') )) {
+		addSub = t.lx[0];
+		loop = 1;
+	}
 	while (loop) {
 		t = GetNextToken();
 		term();
+		if(addSub == '+') {
+			writeArithmetic(ADD);
+		} else {
+			writeArithmetic(SUB);
+		}
 		if( status.er != 0) return;
 		t = PeekNextToken();
-		if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') ));
+		if( (t.tp == 3) && ( (t.lx[0] == '+') || (t.lx[0] == '-') )){
+			addSub = t.lx[0];
+		}
 		else loop = 0;
 	}
 }
@@ -1219,13 +1350,26 @@ void term()
 	//______{(*|/) FACTOR}
 	Token t = PeekNextToken();
 	int loop = 0;
-	if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') )) loop = 1;
+	char multdiv;
+
+	if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') )){
+		loop = 1;
+		multdiv = t.lx[0];
+	} 
 	while (loop) {
 		t = GetNextToken();
 		factor();
 		if( status.er != 0) return;
+		if(multdiv == '*') {
+			writeCall("Math.multiply", 2);
+		} else {
+			writeCall("Math.divide", 2);
+		}
+
 		t = PeekNextToken();
-		if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') ));
+		if( (t.tp == 3) && ( (t.lx[0] == '*') || (t.lx[0] == '/') )){
+			multdiv = t.lx[0];
+		}
 		else loop = 0;
 	}
 
@@ -1237,11 +1381,27 @@ void factor()
 {
 	//______ -|~______
 	Token t = PeekNextToken();
-	if( (t.tp == 3) && ( (t.lx[0] == '-') || (t.lx[0] == '~'))) t = GetNextToken();
+	int doArith = 0;
+	char arith;
+	if( (t.tp == 3) && ( (t.lx[0] == '-'))) {
+		arith = t.lx[0];
+		t = GetNextToken();
+	} else if ((t.tp == 3) && (t.lx[0] == '~') ){
+		t = GetNextToken();
+		arith = t.lx[0];
+	} 
 
 	//______ OPERAND ______
 	operand();
 	if (status.er != 0 ) return;
+
+	if(doArith) {
+		if(arith == '-'){
+			writeArithmetic(NEG);
+		} else {
+			writeArithmetic(NOT);
+		}
+	}
 }
 
 
@@ -1258,11 +1418,18 @@ void operand()
 		return;
 	}
 	//_____INTEGER CONSTANT______
-	if( t.tp == 2){;}
+	if( t.tp == 2){
+		writePush(CONST, atoi(t.lx));
+	}
 	//_______IDENTIFIER________
 	else if( t.tp == 1 ){
+		char funcCall[128];
+		int type = 0; //0 for 1 id or array, 1 for call
+		int idCount = 1;
 		one = t;
+		int expList = 0;
 		int index = IndexOf(t.lx);
+		strcpy(funcCall, one.lx);
 		// if not there, check class names:
 		if( index == -1) {
 			int cExists = classExists(t.lx);
@@ -1284,6 +1451,9 @@ void operand()
 			}
 			if( t.tp == 1) {
 				two = t;
+				type = 1;
+				strcat(funcCall, ".");
+				strcat(funcCall, two.lx);
 				addUndec(one, two, 2);
 			}
 			else {
@@ -1293,8 +1463,45 @@ void operand()
 			}
 		}
 
-		//______ [______
 		t = PeekNextToken();
+		//______ ( ______
+		if( (t.tp == 3) && (t.lx[0] == '(')){
+			t = GetNextToken();
+			//______ EXPRESSION LIST ______
+			expList = expressionList();
+			type = 1;
+			if( status.er != 0) return;
+			t = GetNextToken();
+			if( t.tp == 6){
+				status.er = lexerErr;
+				status.tk = t;
+				return;
+			}
+			//______ ) ______
+			if( (t.tp == 3) && (t.lx[0] == ')'));
+			else{
+				status.er = closeParenExpected;
+				status.tk = t;
+				return;
+			}
+		}
+
+		if(type == 0){
+			Kind kind = KindOf(one.lx);			
+			if(kind == STATIC){
+				writePush(STAT, index);
+			} else if (kind == FIELD) {
+				writePush(THIS, index);
+			} else if (kind == ARG) {
+				writePush(ARGU, index);
+			} else if (kind == VAR) {
+				writePush(LOC, index);
+			}
+		} else {
+			writeCall(funcCall, expList);
+		}
+
+		//______ [______
 		if( (t.tp == 3) && (t.lx[0] == '[')){
 			t = GetNextToken();
 			//______ EXPRESSION ______
@@ -1313,27 +1520,7 @@ void operand()
 				status.tk = t;
 				return;
 			}
-		}
-
-		//______ ( ______
-		else if( (t.tp == 3) && (t.lx[0] == '(')){
-			t = GetNextToken();
-			//______ EXPRESSION LIST ______
-			expressionList();
-			if( status.er != 0) return;
-			t = GetNextToken();
-			if( t.tp == 6){
-				status.er = lexerErr;
-				status.tk = t;
-				return;
-			}
-			//______ ) ______
-			if( (t.tp == 3) && (t.lx[0] == ')'));
-			else{
-				status.er = closeParenExpected;
-				status.tk = t;
-				return;
-			}
+			writeArithmetic(ADD);
 		}
 	}
 
@@ -1358,12 +1545,28 @@ void operand()
 	}
 
 	//________ STRING LITERAL _______
-	else if (t.tp == 4);
+	else if (t.tp == 4) {
+		int strlength = strlen(t.lx);
+		writePush(CONST, strlength);
+		writeCall("String.new", 1);
+		for(int i=0; i<strlength; i++) {
+			int asc = t.lx[i];
+			writePush(CONST, asc);
+			writeCall("String.appendChar", 2);
+		}
+	}
 
 	//________ TRUE/FALSE/NULL/THIS _______
-	else if(( t.tp == 0) && ( !strcmp(t.lx, "true") || !strcmp(t.lx, "false") || 
-			!strcmp(t.lx, "null") || !strcmp(t.lx, "this") ));
-	else {
+	else if(( t.tp == 0) && ( !strcmp(t.lx, "true"))) {
+		writePush(CONST, 1);
+		writeArithmetic(NEG);
+	} else if(( t.tp == 0) && ( !strcmp(t.lx, "false"))) {
+		writePush(CONST, 0);
+	} else if(( t.tp == 0) && ( !strcmp(t.lx, "null"))) {
+		writePush(CONST, 0);
+	} else if(( t.tp == 0) && ( !strcmp(t.lx, "this"))) {
+		writePush(POINTER, 0);
+	} else {
 		status.er = syntaxError;
 		status.tk = t;
 		return;
@@ -1382,6 +1585,8 @@ ParserInfo Parse ()
 	// Default error is none
 	status.er = none;
 
+	ifNum = 0;
+	whileNum = 0;
 	//___________ CLASS ___________
 	Token t = GetNextToken();
 	if (t.tp == 6){

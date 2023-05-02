@@ -1,0 +1,6 @@
+function A.M 0
+push local 1
+pop this 0
+function A.Sub 1
+push constant 12
+pop this 0
