@@ -1,0 +1,16 @@
+function Main.main 0
+push constant 2
+push constant 3
+call Fraction.new 2
+pop local 0
+push constant 1
+push constant 5
+call Fraction.new 2
+pop local 1
+push local 1
+call a.plus 1
+pop local 2
+call Fraction.print 0
+pop temp 0
+push constant 0
+return

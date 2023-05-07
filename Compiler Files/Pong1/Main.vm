@@ -1,10 +1,11 @@
 function Main.main 0
-push pointer 0
 call PongGame.newInstance 0
 call PongGame.getInstance 0
+pop temp 0
+pop pointer 1
+push temp 0
 pop that 0
-push pointer 0
 call PongGame.run 0
-push pointer 0
 call PongGame.dispose 0
+push constant 0
 return

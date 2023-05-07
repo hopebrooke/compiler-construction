@@ -17,32 +17,28 @@ sub
 pop argument 13
 push constant 0
 pop argument 14
-push pointer 0
 call Ball.show 0
 push pointer 0
 return
 function Ball.dispose 0
 push pointer 0
-push pointer 0
 call Memory.deAlloc 1
+push constant 0
 return
 function Ball.show 0
-push pointer 0
 push constant 1
 neg
 call Screen.setColor 1
-push pointer 0
 call Ball.draw 0
+push constant 0
 return
 function Ball.hide 0
-push pointer 0
 push constant 0
 call Screen.setColor 1
-push pointer 0
 call Ball.draw 0
+push constant 0
 return
 function Ball.draw 0
-push pointer 0
 push this 0
 push this 1
 push this 0
@@ -52,6 +48,7 @@ push this 1
 push constant 5
 add
 call Screen.drawRectangle 4
+push constant 0
 return
 function Ball.getLeft 0
 push this 0
@@ -123,9 +120,9 @@ push argument 0
 sub
 call Math.multiply 2
 pop argument 6
+push constant 0
 return
 function Ball.move 0
-push pointer 0
 call Ball.hide 0
 push this 4
 push constant 0
@@ -248,7 +245,6 @@ label IF_TRUE10
 push this 13
 pop this 1
 label IF_FALSE10
-push pointer 0
 call Ball.show 0
 push this 14
 return
@@ -370,8 +366,8 @@ push argument 4
 call Math.multiply 2
 add
 pop argument 0
-push pointer 0
 push argument 0
 push argument 1
 call Ball.setDestination 2
+push constant 0
 return
