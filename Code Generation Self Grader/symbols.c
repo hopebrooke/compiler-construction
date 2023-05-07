@@ -59,7 +59,7 @@ int Define(char* name, char* type, Kind kind, int index, char args[10][128], cha
         subroutineTable[stCount].vf = 0;
         subroutineTable[stCount].args[0][0] = '\0';
         subroutineTable[stCount].argTypes[0][0] = '\0';
-        // subroutineTable[stCount].vars = 0;
+        subroutineTable[stCount].vars = 0;
         stCount ++;
     } else {
         // class table 
@@ -77,7 +77,7 @@ int Define(char* name, char* type, Kind kind, int index, char args[10][128], cha
             }
         }
         programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].kind = kind;
-        // programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].vars = 0;
+        programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].vars = 0;
         strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].name, name);
         strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].type, type);
         programTable[ptCount-1].ctCount ++;

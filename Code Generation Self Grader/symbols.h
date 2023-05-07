@@ -14,7 +14,7 @@ typedef struct symbol {
     Kind kind;      // Kind of varibale/function
     int index; // Index for variables, num of arguments for functions
     // memory size?
-    // int vars;
+    int vars;
     // list of arguments and return types:
     char args[50][128];
     char argTypes[50][128];

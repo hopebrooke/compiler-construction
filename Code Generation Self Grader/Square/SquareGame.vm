@@ -18,6 +18,7 @@ push constant 0
 return
 function SquareGame.moveSquare 0
 push this 1
+push this 1
 push constant 1
 eq
 call Square.moveUp 0
@@ -26,6 +27,7 @@ if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
 label IF_FALSE0
+push this 1
 push this 1
 push constant 2
 eq
@@ -36,6 +38,7 @@ goto IF_FALSE1
 label IF_TRUE1
 label IF_FALSE1
 push this 1
+push this 1
 push constant 3
 eq
 call Square.moveLeft 0
@@ -44,6 +47,7 @@ if-goto IF_TRUE2
 goto IF_FALSE2
 label IF_TRUE2
 label IF_FALSE2
+push this 1
 push this 1
 push constant 4
 eq
@@ -58,14 +62,16 @@ call Sys.wait 1
 pop temp 0
 push constant 0
 return
-function SquareGame.run 0
+function SquareGame.run 2
 push constant 0
 pop local 1
 label WHILE_EXP0
 push local 1
+push local 1
 not
 if-goto WHILE_END0
 label WHILE_EXP1
+push local 0
 push local 0
 push constant 0
 eq
@@ -78,6 +84,7 @@ pop temp 0
 goto WHILE_EXP1
 label WHILE_END1
 push local 0
+push local 0
 push constant 81
 eq
 push constant 1
@@ -88,6 +95,7 @@ goto IF_FALSE0
 label IF_TRUE0
 label IF_FALSE0
 push local 0
+push local 0
 push constant 90
 eq
 call Square.decSize 0
@@ -96,6 +104,7 @@ if-goto IF_TRUE1
 goto IF_FALSE1
 label IF_TRUE1
 label IF_FALSE1
+push local 0
 push local 0
 push constant 88
 eq
@@ -106,6 +115,7 @@ goto IF_FALSE2
 label IF_TRUE2
 label IF_FALSE2
 push local 0
+push local 0
 push constant 131
 eq
 push constant 1
@@ -114,6 +124,7 @@ if-goto IF_TRUE3
 goto IF_FALSE3
 label IF_TRUE3
 label IF_FALSE3
+push local 0
 push local 0
 push constant 133
 eq
@@ -124,6 +135,7 @@ goto IF_FALSE4
 label IF_TRUE4
 label IF_FALSE4
 push local 0
+push local 0
 push constant 130
 eq
 push constant 3
@@ -132,6 +144,7 @@ if-goto IF_TRUE5
 goto IF_FALSE5
 label IF_TRUE5
 label IF_FALSE5
+push local 0
 push local 0
 push constant 132
 eq
@@ -142,6 +155,7 @@ goto IF_FALSE6
 label IF_TRUE6
 label IF_FALSE6
 label WHILE_EXP2
+push local 0
 push local 0
 push constant 0
 eq

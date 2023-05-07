@@ -1,2 +1,2 @@
-function Array.new 1
+function Array.new 0
 function Array.dispose 0

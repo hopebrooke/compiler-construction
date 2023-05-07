@@ -109,13 +109,13 @@ void classVarDeclar()
 	if(t.tp == 1){
 		// Check if the identifier already exists
 		int exists = search(t.lx, kind);
-		if(exists) {
+		if(exists && (compileNum == 0)) {
 			status.er = redecIdentifier;
 			status.tk = t;
-		} else {
+		} else if ((kind == 2) || (kind == 3) || (compileNum == 0)) {
 			char empty[10][128];
 			Define(t.lx, typeSymbol, kind, 1, empty, empty);
-		}
+		} 
 	}
 	else {
 		status.er = idExpected;
@@ -139,10 +139,10 @@ void classVarDeclar()
 		if(t.tp == 1){
 			// Check if the identifier already exists
 			int exists = search(t.lx, kind);
-			if(exists) {
+			if(exists && (compileNum == 0)) {
 				status.er = redecIdentifier;
 				status.tk = t;
-			} else {
+			} else if( (kind == 2) || (kind == 3) || (compileNum == 0)) {
 				char empty[10][128];
 				Define(t.lx, typeSymbol, kind, 1, empty, empty);
 			}
@@ -188,7 +188,7 @@ void type()
 	if(t.tp == 1) {
 		// Check if identifier exists in classes
 		int exists = classExists(t.lx);
-		if( !exists ){
+		if( !exists && (compileNum==0)){
 			// Add to undeclared id list
 			Token two;
 			addUndec(t, two, 1);
@@ -213,7 +213,7 @@ void subroutineDeclar()
 	int index;
 	char args[50][128];
 	char argTypes[50][128];
-	int vars;
+	int vars = 0;
 
 	//___________ CONSTRUCTOR/FUNCTION/METHOD ___________
 	Token t = GetNextToken();
@@ -251,7 +251,7 @@ void subroutineDeclar()
 	if( t.tp == 1) {
 		// Check if the identifier already exists
 		int exists = search(t.lx, kind);
-		if(exists) {
+		if(exists && (compileNum == 0)) {
 			status.er = redecIdentifier;
 			status.tk = t;
 		} else {
@@ -302,12 +302,27 @@ void subroutineDeclar()
 		return;
 	}
 	// Add to symbol table:
-	Define(name, typeSymbol, kind, index, args, argTypes);
+	if ((kind == 2) || (kind == 3) || (compileNum == 0)) {
+		Define(name, typeSymbol, kind, index, args, argTypes);
+	}
 	char funcName[128] = "";
 	strcat(funcName, currentClass);
 	strcat(funcName, ".");
 	strcat(funcName, name);
-	writeFunction(funcName, index);
+	// Get number of variables declared:
+	// Find class:
+	if( compileNum == 1) {
+		for( int i=0; i<ptCount; i++){
+			if(!strcmp(currentClass, programTable[i].name)){
+				for(int j=0; j<programTable[i].ctCount; j++){
+					if(!strcmp(name, programTable[i].classTable[j].name)){
+						vars = programTable[i].classTable[j].vars;
+					}
+				}
+			}
+		}
+	}
+	writeFunction(funcName, vars);
 
 	// Start subroutine:
 	startSubroutine();
@@ -316,9 +331,15 @@ void subroutineDeclar()
 	for(int i=0; i<parameters.num; i++){
 		Define(parameters.args[i], parameters.argTypes[i], ARG, i, emptyArgs, emptyArgs);
 	}
-
+	
+	
 	//______ SUBROUTINEBODY ______
 	subroutineBody();
+	// Set num of local vars:
+	if(compileNum == 0){
+		vars = VarCount(VAR);
+		programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount-1].vars = vars;
+	}
 	if( status.er != 0 ) return;
 }
 
@@ -526,7 +547,7 @@ void varDeclarStatement()
 	}
 	if( t.tp == 1 ) {
 		int exists = search(t.lx, kind);
-		if(exists){
+		if(exists && (compileNum == 0)){
 			status.er = redecIdentifier;
 			status.tk = t;
 			return;
@@ -556,7 +577,7 @@ void varDeclarStatement()
 		}
 		if( t.tp == 1 ){
 			int exists = search(t.lx, kind);
-			if(exists){
+			if(exists && (compileNum == 0)){
 				status.er = redecIdentifier;
 				status.tk = t;
 				return;
@@ -623,7 +644,11 @@ void letStatement()
 		index = IndexOf(t.lx);
 		//Get kind:
 		kind = KindOf(t.lx);
-		if(index == -1) {
+		// if(!strcmp(currentClass, "Main")) {
+		// 	printf("%s\n", t.lx);
+		// 	printf("%i", KindOf(t.lx));
+		// }
+		if((index == -1) && (compileNum == 0)) {
 			status.er = undecIdentifier;
 			status.tk = t;
 			return;
@@ -1068,7 +1093,7 @@ void subroutineCall()
 		strcpy(firstId, one.lx);
 		if(index==-1) {
 			int cExists = classExists(t.lx);
-			if(!cExists) {
+			if(!cExists && (compileNum == 0)) {
 				strcpy(two.lx, currentClass);
 				addUndec(one, two, 1);
 			}
@@ -1106,8 +1131,9 @@ void subroutineCall()
 			int index = IndexOf(one.lx);
 			if(index != -1) {
 				strcpy(one.lx, TypeOf(one.lx));
+			} else if (compileNum == 0){
+				addUndec(one, two, 2);
 			}
-			addUndec(one, two, 2);
 		}
 		else{
 			status.er = idExpected;
@@ -1431,15 +1457,29 @@ void operand()
 		one = t;
 		int expList = 0;
 		int index = IndexOf(t.lx);
+
 		strcpy(funcCall, one.lx);
 		// if not there, check class names:
 		if( index == -1) {
 			int cExists = classExists(t.lx);
-			if( !cExists) {
+			if( !cExists && (compileNum == 0)) {
 				addUndec(one, two, 1);
 			}
 		} 
-		
+		int cExists = classExists(t.lx);
+		if (!cExists) {
+			Kind kind = KindOf(one.lx);	
+			int index = IndexOf(one.lx);	
+			if(kind == 0){
+				writePush(STAT, index);
+			} else if (kind == 1) {
+				writePush(THIS, index);
+			} else if (kind == 2) {
+				writePush(ARGU, index);
+			} else if (kind == 3) {
+				writePush(LOC, index);
+			}
+		}
 		//______ . ______
 		t = PeekNextToken();
 		if( (t.tp == 3) && (t.lx[0] == '.')){
@@ -1453,10 +1493,12 @@ void operand()
 			}
 			if( t.tp == 1) {
 				two = t;
-				type = 1;
+				type = type + 1; // ----> id.id = 1
 				strcat(funcCall, ".");
 				strcat(funcCall, two.lx);
-				addUndec(one, two, 2);
+				if( compileNum == 0){
+					addUndec(one, two, 2);
+				}
 			}
 			else {
 				status.er = idExpected;
@@ -1471,7 +1513,7 @@ void operand()
 			t = GetNextToken();
 			//______ EXPRESSION LIST ______
 			expList = expressionList();
-			type = 1;
+			type = type + 2; //------> id(explist) = 2, id[.id](explist) = 3
 			if( status.er != 0) return;
 			t = GetNextToken();
 			if( t.tp == 6){
@@ -1487,7 +1529,10 @@ void operand()
 				return;
 			}
 		}
-
+		// TYPE 0: id
+		// TYPE 1: id.id
+		// TYPE 2: id(expList)
+		// TYPE 3: id.id(expList) 
 		if(type == 0){
 			Kind kind = KindOf(one.lx);			
 			if(kind == STATIC){
@@ -1499,7 +1544,20 @@ void operand()
 			} else if (kind == VAR) {
 				writePush(LOC, index);
 			}
-		} else {
+		} else if (type == 2) {
+			writeCall(funcCall, expList);
+		} else if( type == 1) {
+			// not sure what should happen when it is id.id
+			type = 1;
+		} else if (type == 3) {
+			char funcCall[128];
+			if(classExists(one.lx)){
+				strcpy(funcCall, one.lx);
+			} else {
+				strcpy(funcCall, TypeOf(one.lx));
+			}
+			strcat(funcCall, ".");
+			strcat(funcCall, two.lx);
 			writeCall(funcCall, expList);
 		}
 
@@ -1614,11 +1672,11 @@ ParserInfo Parse ()
 		// Check if class exists:
 		strcpy(currentClass, t.lx);
 		int exists = classExists(t.lx);
-		if(exists) {
+		if(exists && (compileNum == 0)) {
 			status.er = redecIdentifier;
 			status.tk = t;
 			return status;
-		} else {
+		} else if (compileNum == 0) {
 			newClass(t.lx);
 		}
 		

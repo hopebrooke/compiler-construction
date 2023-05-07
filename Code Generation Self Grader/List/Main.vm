@@ -1,4 +1,4 @@
-function Main.main 0
+function Main.main 1
 push constant 5
 push constant 0
 call List.new 2

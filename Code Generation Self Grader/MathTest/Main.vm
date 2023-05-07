@@ -1,4 +1,4 @@
-function Main.main 0
+function Main.main 1
 push constant 8000
 pop temp 0
 pop pointer 1

@@ -1,4 +1,4 @@
-function Main.main 0
+function Main.main 4
 push constant 18
 call String.new 1
 push constant 72
@@ -40,16 +40,20 @@ call String.appendChar 2
 call Keyboard.readInt 1
 pop local 1
 push local 1
+push local 1
 call Array.new 1
 pop local 0
 push constant 0
 pop local 2
 label WHILE_EXP0
 push local 2
+push local 2
+push local 1
 push local 1
 lt
 not
 if-goto WHILE_END0
+push local 2
 push local 2
 push local 0
 add
@@ -107,6 +111,7 @@ pop pointer 1
 push temp 0
 pop that 0
 push local 2
+push local 2
 push constant 1
 add
 pop local 2
@@ -118,16 +123,22 @@ push constant 0
 pop local 3
 label WHILE_EXP1
 push local 2
+push local 2
+push local 1
 push local 1
 lt
 not
 if-goto WHILE_END1
 push local 3
+push local 3
 push local 0
+push local 0
+push local 2
 push local 2
 add
 add
 pop local 3
+push local 2
 push local 2
 push constant 1
 add
@@ -171,6 +182,8 @@ call String.appendChar 2
 call Output.printString 1
 pop temp 0
 push local 3
+push local 3
+push local 1
 push local 1
 call Math.divide 2
 call Output.printInt 1

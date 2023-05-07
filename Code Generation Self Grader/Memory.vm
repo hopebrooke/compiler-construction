@@ -1,5 +1,5 @@
 function Memory.init 0
-function Memory.peek 1
-function Memory.poke 2
-function Memory.alloc 1
-function Memory.deAlloc 1
+function Memory.peek 0
+function Memory.poke 0
+function Memory.alloc 0
+function Memory.deAlloc 0
