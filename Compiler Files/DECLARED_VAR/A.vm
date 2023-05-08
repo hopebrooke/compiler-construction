@@ -1,6 +1,8 @@
-function A.M 0
-push local 1
+function A.M 1
+push this 1
 pop this 0
-function A.Sub 1
+function A.Sub 0
+push argument 0
+pop pointer 0
 push constant 12
-pop this 0
+pop argument 1

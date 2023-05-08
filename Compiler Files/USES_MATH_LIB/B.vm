@@ -1,7 +1,7 @@
-function B.f 0
+function B.f 1
 push constant 6
 push constant 21
 push constant 1
 add
 call Math.multiply 2
-pop this 0
+pop local 0

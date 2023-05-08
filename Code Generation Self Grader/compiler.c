@@ -21,6 +21,7 @@ Date Work Commenced: 03/04/2023
 #include <dirent.h>
 
 FILE * fp;
+extern int compileNum;
 
 int InitCompiler ()
 {
@@ -87,7 +88,6 @@ ParserInfo compile (char* dir_name)
 			InitLexer(route);
 
 			// open write file
-			int length = strlen(route);
 			char fileName[128] = "";
 			for(int i=0; '.' != route[i]; i++) {
 				fileName[i] = route[i];
@@ -98,7 +98,7 @@ ParserInfo compile (char* dir_name)
 			p = Parse();
 			fclose(fp);
 			if(p.er != 0) {
-				break;
+				return p;
 			}
 
 		}
@@ -107,6 +107,9 @@ ParserInfo compile (char* dir_name)
 	
 	if(p.er == 0) {
 		p = checkUndec();
+		if( p.er != 0 ) {
+			return p;
+		}
 	}
 
 	// Parse again:
@@ -126,7 +129,6 @@ ParserInfo compile (char* dir_name)
 			InitLexer(route);
 
 			// open write file
-			int length = strlen(route);
 			char fileName[128] = "";
 			for(int i=0; '.' != route[i]; i++) {
 				fileName[i] = route[i];
@@ -145,12 +147,11 @@ ParserInfo compile (char* dir_name)
     closedir(dr); 
 	
 	return p;
-
 }
+
 
 int StopCompiler ()
 {
-
 	return 1;
 }
 
@@ -228,6 +229,7 @@ int writeLabel(char* label) {
 	strcat(line, label);
 	strcat(line, "\n");
 	fputs(line, fp);
+	return 0;
 }
 
 int writeGoto(char* label) {
@@ -235,6 +237,7 @@ int writeGoto(char* label) {
 	strcat(line, label);
 	strcat(line, "\n");
 	fputs(line, fp);
+	return 0;
 }
 
 int writeIf(char* label) {
@@ -242,6 +245,7 @@ int writeIf(char* label) {
 	strcat(line, label);
 	strcat(line, "\n");
 	fputs(line, fp);
+	return 0;
 }
 
 int writeCall(char* name, int nArgs) {
@@ -251,6 +255,7 @@ int writeCall(char* name, int nArgs) {
 	sprintf(index," %d\n",nArgs); 
 	strcat(line, index);
 	fputs(line, fp);
+	return 0;
 }
 
 int writeFunction(char* name, int nLocals) {
@@ -260,10 +265,12 @@ int writeFunction(char* name, int nLocals) {
 	sprintf(index," %d\n",nLocals); 
 	strcat(line, index);
 	fputs(line, fp);
+	return 0;
 }
 
 int writeReturn() {
 	fputs("return\n", fp);
+	return 0;
 }
 
 

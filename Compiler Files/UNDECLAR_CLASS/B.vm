@@ -2,4 +2,4 @@ function B.f 0
 push constant 65
 push constant 2
 call Math.multiply 2
-pop this 0
+pop local 0

@@ -8,8 +8,7 @@
 
 typedef enum {CONST, ARGU, LOC, STAT, THIS, THAT, POINTER, TEMP} Segment;
 typedef enum {ADD, SUB, NEG, EQ, GT, LT, AND, OR, NOT} Command;
-
-int compileNum;
+// int compileNum;
 
 int InitCompiler ();
 ParserInfo compile (char* dir_name);

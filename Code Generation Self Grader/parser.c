@@ -9,10 +9,19 @@
 
 // Make parameter list struct:
 typedef struct param {
-	char args[50][128];
-	char argTypes[50][128];
+	char args[25][128];
+	char argTypes[25][128];
 	int num;
 } param;
+
+undeclared undeclaredTable[128];
+int utCount;
+classTable programTable[128];
+int ptCount;
+symbol subroutineTable[128];
+int stCount;
+int compileNum;
+
 
 // Parser Function Declarations
 void memberDeclar();
@@ -112,9 +121,10 @@ void classVarDeclar()
 		if(exists && (compileNum == 0)) {
 			status.er = redecIdentifier;
 			status.tk = t;
+			return;
 		} else if ((kind == 2) || (kind == 3) || (compileNum == 0)) {
 			char empty[10][128];
-			Define(t.lx, typeSymbol, kind, 1, empty, empty);
+			Define(t.lx, typeSymbol, kind, -1, empty, empty);
 		} 
 	}
 	else {
@@ -144,7 +154,7 @@ void classVarDeclar()
 				status.tk = t;
 			} else if( (kind == 2) || (kind == 3) || (compileNum == 0)) {
 				char empty[10][128];
-				Define(t.lx, typeSymbol, kind, 1, empty, empty);
+				Define(t.lx, typeSymbol, kind, -1, empty, empty);
 			}
 		}
 		else {
@@ -335,9 +345,11 @@ void subroutineDeclar()
 				}
 			}
 		}
-
 		writePush(CONST, objSize);
 		writeCall("Memory.alloc", 1);
+		writePop(POINTER, 0);
+	} else if (kind == METHOD) {
+		writePush(ARGU, 0);
 		writePop(POINTER, 0);
 	}
 
@@ -346,7 +358,11 @@ void subroutineDeclar()
 	// Add parameters as arguments:
 	char emptyArgs[50][128];
 	for(int i=0; i<parameters.num; i++){
-		Define(parameters.args[i], parameters.argTypes[i], ARG, i, emptyArgs, emptyArgs);
+		if( kind == METHOD) {
+			Define(parameters.args[i], parameters.argTypes[i], ARG, i+1, emptyArgs, emptyArgs);
+		} else {
+			Define(parameters.args[i], parameters.argTypes[i], ARG, i, emptyArgs, emptyArgs);
+		}
 	}
 	
 	
@@ -530,7 +546,6 @@ void statement()
 void varDeclarStatement()
 {
 	char typeSymbol[128];
-	char name[128];
 	char args[50][128];
 	Kind kind = VAR;
 
@@ -569,7 +584,7 @@ void varDeclarStatement()
 			status.tk = t;
 			return;
 		} else {
-			Define(t.lx, typeSymbol, kind, 0, args, args);
+			Define(t.lx, typeSymbol, kind, -1, args, args);
 		}
 	}
 	else {
@@ -599,7 +614,7 @@ void varDeclarStatement()
 				status.tk = t;
 				return;
 			} else {
-				Define(t.lx, typeSymbol, kind, 0, args, args);
+				Define(t.lx, typeSymbol, kind, -1, args, args);
 			}
 		}
 		else {
@@ -656,12 +671,21 @@ void letStatement()
 	}
 	Kind kind;
 	int index;
-	Token one = t;
 	if( t.tp == 1 ){
 		//check if exists:
-		index = IndexOf(t.lx);
-		//Get kind:
-		kind = KindOf(t.lx);
+
+		symbol sym = FindSymbol(currentClass, t.lx);
+
+		if(!strcmp(sym.name, " ")){
+			// WORKS FOR LOCAL VARS/ARGS:
+			index = IndexOf(t.lx);
+			kind = KindOf(t.lx);
+		} else {
+			// WORKS FOR FIELD/STATIC:
+			index = sym.index;
+			kind = sym.kind;
+		}
+		
 		if((index == -1) && (compileNum == 0)) {
 			status.er = undecIdentifier;
 			status.tk = t;
@@ -749,9 +773,7 @@ void letStatement()
 	if(kind == STATIC) {
 		writePop(STAT, index);
 	} else if (kind == FIELD) {
-		// printf("%s: %i\n", one.lx, kind);
 		writePop(THIS, index);
-		// writeCall("What", 1);
 	} else if (kind == ARG) {
 		writePop(ARGU, index);
 	} else if (kind == VAR) {
@@ -829,9 +851,6 @@ void ifStatement()
 		return;
 	}
 
-	//______ STATEMENT ______
-	statement();
-	if( status.er != 0 ) return;
 
 	char ifTrue[128] = "IF_TRUE";
 	char ifFalse[128] = "IF_FALSE";
@@ -846,6 +865,11 @@ void ifStatement()
 	ifNum ++;
 
 	writeLabel(ifTrue);
+
+	//______ STATEMENT ______
+	statement();
+	if( status.er != 0 ) return;
+
 	//______ {STATEMENT} ______
 	t = PeekNextToken();
 	int loop = 0;
@@ -1164,7 +1188,8 @@ void subroutineCall()
 			int index = IndexOf(one.lx);
 			if(index != -1) {
 				strcpy(one.lx, TypeOf(one.lx));
-			} else if (compileNum == 0){
+			} 
+			if (compileNum == 0){
 				addUndec(one, two, 2);
 			}
 		}
@@ -1216,15 +1241,17 @@ void subroutineCall()
 		strcpy(funcCall, currentClass);
 		strcat(funcCall, ".");
 		strcat(funcCall, firstId);
-		if(WholeScopeKind(currentClass, firstId) == METHOD) {
+		if(FindSymbol(currentClass, firstId).kind == METHOD) {
 			expressions ++;
+			writePush(POINTER, 0);
 		}
 	} else {
 		strcpy(funcCall, one.lx);
 		strcat(funcCall, ".");
 		strcat(funcCall, two.lx);
-		if(WholeScopeKind(one.lx, two.lx) == METHOD) {
+		if(FindSymbol(one.lx, two.lx).kind == METHOD) {
 			expressions ++;
+			// writePush(POINTER, 0);
 		}
 	}
 	writeCall(funcCall, expressions);
@@ -1452,9 +1479,11 @@ void factor()
 	char arith;
 	if( (t.tp == 3) && ( (t.lx[0] == '-'))) {
 		arith = t.lx[0];
+		doArith = 1;
 		t = GetNextToken();
 	} else if ((t.tp == 3) && (t.lx[0] == '~') ){
 		t = GetNextToken();
+		doArith = 1;
 		arith = t.lx[0];
 	} 
 
@@ -1492,11 +1521,9 @@ void operand()
 	else if( t.tp == 1 ){
 		char funcCall[128];
 		int type = 0; //0 for 1 id or array, 1 for call
-		int idCount = 1;
 		one = t;
 		int expList = 0;
 		int index = IndexOf(t.lx);
-
 
 		strcpy(funcCall, one.lx);
 		// if not there, check class names:
@@ -1540,6 +1567,10 @@ void operand()
 				strcat(funcCall, ".");
 				strcat(funcCall, two.lx);
 				if( compileNum == 0){
+					int index = IndexOf(one.lx);
+					if(index != -1) {
+						strcpy(one.lx, TypeOf(one.lx));
+					} 
 					addUndec(one, two, 2);
 				}
 			}
@@ -1577,7 +1608,13 @@ void operand()
 		// TYPE 2: id(expList)
 		// TYPE 3: id.id(expList) 
 		if(type == 0){
-			Kind kind = KindOf(one.lx);			
+			symbol sym = FindSymbol(currentClass, one.lx);
+			Kind kind = KindOf(one.lx);
+			if(strcmp(sym.name, " ")) {
+				kind = sym.kind;
+				index = sym.index;
+			}
+						
 			if(kind == STATIC){
 				writePush(STAT, index);
 			} else if (kind == FIELD) {
@@ -1589,7 +1626,7 @@ void operand()
 			}
 		} else if (type == 2) {
 			// Work out the kind of function:
-			Kind kind = WholeScopeKind(currentClass, one.lx);
+			Kind kind = FindSymbol(currentClass, one.lx).kind;
 			if(kind == METHOD) {
 				expList = expList + 1;
 			}
@@ -1603,7 +1640,7 @@ void operand()
 				strcpy(funcCall, one.lx);
 			} else {
 				strcpy(funcCall, TypeOf(one.lx));
-				Kind twoKind = WholeScopeKind(TypeOf(one.lx), two.lx);
+				Kind twoKind = FindSymbol(TypeOf(one.lx), two.lx).kind;
 				if(twoKind == METHOD) {
 					expList = expList + 1;
 				}
@@ -1670,8 +1707,8 @@ void operand()
 
 	//________ TRUE/FALSE/NULL/THIS _______
 	else if(( t.tp == 0) && ( !strcmp(t.lx, "true"))) {
-		writePush(CONST, 1);
-		writeArithmetic(NEG);
+		writePush(CONST, 0);
+		writeArithmetic(NOT);
 	} else if(( t.tp == 0) && ( !strcmp(t.lx, "false"))) {
 		writePush(CONST, 0);
 	} else if(( t.tp == 0) && ( !strcmp(t.lx, "null"))) {

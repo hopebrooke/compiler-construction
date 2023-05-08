@@ -22,7 +22,6 @@ Date Work Commenced: 03/04/2023
 
 FILE * fp;
 
-
 int InitCompiler ()
 {
 	return 1;
@@ -33,9 +32,11 @@ ParserInfo compile (char* dir_name)
 	ParserInfo p;
 	p.er = none;
 
+	compileNum = 0;
+
 	// Start symbol tables:
 	Constructor();
-
+	
 	InitLexer("Sys.jack");
     fp = fopen("Sys.vm", "w");
     p = Parse();
@@ -86,33 +87,70 @@ ParserInfo compile (char* dir_name)
 			InitLexer(route);
 
 			// open write file
-			int length = strlen(route);
 			char fileName[128] = "";
 			for(int i=0; '.' != route[i]; i++) {
 				fileName[i] = route[i];
 			}
 			strcat(fileName, ".vm");
+			compileNum = 0;
 			fp = fopen(fileName, "w");
 			p = Parse();
-
 			fclose(fp);
 			if(p.er != 0) {
-				break;
+				return p;
 			}
+
 		}
 	}
     closedir(dr); 
 	
 	if(p.er == 0) {
 		p = checkUndec();
+		if( p.er != 0 ) {
+			return p;
+		}
 	}
-	return p;
 
+	// Parse again:
+	dr = opendir(dir_name); 
+
+    if (dr == NULL){
+        printf("Could not open current directory");
+    }
+
+    // Referencing each file/folder within the directory
+    while ((de = readdir(dr)) != NULL) {
+		if( (!strcmp(de->d_name + strlen(de->d_name) - 5, ".jack"))) {
+			char route[128];
+			strcpy(route, dir_name);
+			strcat(route, "/");
+			strcat(route, de->d_name);
+			InitLexer(route);
+
+			// open write file
+			char fileName[128] = "";
+			for(int i=0; '.' != route[i]; i++) {
+				fileName[i] = route[i];
+			}
+			strcat(fileName, ".vm");
+			compileNum = 1;
+			fp = fopen(fileName, "w");
+			p = Parse();
+			fclose(fp);
+			if(p.er != 0) {
+				break;
+			}
+
+		}
+	}
+    closedir(dr); 
+	
+	return p;
 }
+
 
 int StopCompiler ()
 {
-
 	return 1;
 }
 
@@ -190,6 +228,7 @@ int writeLabel(char* label) {
 	strcat(line, label);
 	strcat(line, "\n");
 	fputs(line, fp);
+	return 0;
 }
 
 int writeGoto(char* label) {
@@ -197,6 +236,7 @@ int writeGoto(char* label) {
 	strcat(line, label);
 	strcat(line, "\n");
 	fputs(line, fp);
+	return 0;
 }
 
 int writeIf(char* label) {
@@ -204,6 +244,7 @@ int writeIf(char* label) {
 	strcat(line, label);
 	strcat(line, "\n");
 	fputs(line, fp);
+	return 0;
 }
 
 int writeCall(char* name, int nArgs) {
@@ -213,6 +254,7 @@ int writeCall(char* name, int nArgs) {
 	sprintf(index," %d\n",nArgs); 
 	strcat(line, index);
 	fputs(line, fp);
+	return 0;
 }
 
 int writeFunction(char* name, int nLocals) {
@@ -222,10 +264,12 @@ int writeFunction(char* name, int nLocals) {
 	sprintf(index," %d\n",nLocals); 
 	strcat(line, index);
 	fputs(line, fp);
+	return 0;
 }
 
 int writeReturn() {
 	fputs("return\n", fp);
+	return 0;
 }
 
 

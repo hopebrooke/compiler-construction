@@ -1,6 +1,3 @@
 function A.M 0
 push constant 100
-pop temp 0
-pop pointer 1
-push temp 0
-pop that 0
+pop this 0

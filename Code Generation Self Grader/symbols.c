@@ -23,8 +23,17 @@ Date Work Commenced: 03/04/2023
 // Need to create list of all identifiers and attributes
 // Must facilitate searching for a symbol in the tables
 // And inserting a symbol into the table
-char emptyArgs[10][128] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
-char emptyArgTypes[10][128] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
+// char emptyArgs[10][64] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
+// char emptyArgTypes[10][64] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
+
+
+extern undeclared undeclaredTable[128];
+extern int utCount;
+extern classTable programTable[128];
+extern int ptCount;
+extern symbol subroutineTable[128];
+extern int stCount;
+
 
 
 // Initialise class symbol table
@@ -40,22 +49,28 @@ int newClass(char * name) {
     strcpy(programTable[ptCount].name, name);
     programTable[ptCount].ctCount = 0; 
     ptCount ++;
+    return 0;
 }
 
 // Empty subroutine table
 int startSubroutine() {
     stCount = 0;
+    return 0;
 }
 
 
 // Define new symbol
-int Define(char* name, char* type, Kind kind, int index, char args[10][128], char argTypes[10][128]){
+int Define(char* name, char* type, Kind kind, int index, char args[50][128], char argTypes[50][128]){
     if ((kind==2) || (kind==3)) {
         // subroutine table
         subroutineTable[stCount].kind = kind;
         strcpy(subroutineTable[stCount].name, name);
         strcpy(subroutineTable[stCount].type, type);
-        subroutineTable[stCount].index = VarCount(kind);
+        if(index == -1) {
+            subroutineTable[stCount].index = VarCount(kind);
+        } else {
+            subroutineTable[stCount].index = index;
+        }
         subroutineTable[stCount].vf = 0;
         subroutineTable[stCount].args[0][0] = '\0';
         subroutineTable[stCount].argTypes[0][0] = '\0';
@@ -82,6 +97,7 @@ int Define(char* name, char* type, Kind kind, int index, char args[10][128], cha
         strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].type, type);
         programTable[ptCount-1].ctCount ++;
     }
+    return 0;
 }
 
 int search (char* name, Kind kind){
@@ -140,6 +156,7 @@ int addUndec(Token one, Token two, int count) {
         undeclaredTable[utCount].count = count;
         utCount ++;
     }
+    return 0;
 }
 
 // Returns the kind of symbol of named identifier
@@ -162,18 +179,20 @@ Kind KindOf(char * name) {
     return kind;
 }
 
-Kind WholeScopeKind(char * className, char * name) {
-    Kind kind = NONE;
+
+symbol FindSymbol(char * className, char * name) {
+    symbol sym;
+    strcpy(sym.name, " ");
     for(int i=0; i<ptCount; i++) {
         if(!strcmp(programTable[i].name, className)) {
             for(int j=0; j<programTable[i].ctCount; j++){
                 if(!strcmp(programTable[i].classTable[j].name, name)) {
-                    return programTable[i].classTable[j].kind;
+                    return programTable[i].classTable[j];
                 }
             }
         }
     }
-    return kind;
+    return sym;
 }
 
 // Returns type of named identifier

@@ -1,3 +1,4 @@
 function B.f 0
-call a.N 0
-pop this 0
+push this 0
+call A.N 0
+pop local 0

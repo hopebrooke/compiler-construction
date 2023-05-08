@@ -1459,11 +1459,11 @@ push argument 0
 push constant 126
 gt
 or
-push constant 0
-pop argument 0
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
+push constant 0
+pop argument 0
 label IF_FALSE0
 push static 0
 push argument 0

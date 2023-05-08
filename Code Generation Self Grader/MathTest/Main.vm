@@ -18,6 +18,7 @@ push local 0
 push constant 0
 add
 push constant 30
+neg
 call Math.multiply 2
 pop temp 0
 pop pointer 1
@@ -73,6 +74,7 @@ push constant 6
 push local 0
 add
 push constant 18000
+neg
 push constant 6
 call Math.divide 2
 pop temp 0
@@ -84,6 +86,7 @@ push local 0
 add
 push constant 32766
 push constant 32767
+neg
 call Math.divide 2
 pop temp 0
 pop pointer 1
@@ -122,6 +125,7 @@ push local 0
 add
 push constant 123
 push constant 345
+neg
 call Math.max 2
 pop temp 0
 pop pointer 1
@@ -140,6 +144,7 @@ push constant 13
 push local 0
 add
 push constant 32767
+neg
 call Math.abs 1
 pop temp 0
 pop pointer 1

@@ -1,2 +1,3 @@
 function B.F 0
 call A.M 0
+pop temp 0
