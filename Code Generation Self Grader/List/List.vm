@@ -1,10 +1,17 @@
 function List.new 0
+push constant 2
+call Memory.alloc 1
+pop pointer 0
 push argument 0
-push argument 0
-pop argument -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push argument 1
-push argument 1
-pop argument -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push pointer 0
 return
 function List.getData 0
@@ -13,26 +20,23 @@ function List.getNext 0
 return
 function List.print 1
 push pointer 0
-pop temp 0
-pop pointer 1
-push temp 0
-pop that 0
+pop local 0
 label WHILE_EXP0
+push local 0
 push constant 0
 eq
 not
 if-goto WHILE_END0
-call List.getData 0
+push local 0
+call List.getData 1
 call Output.printInt 1
 pop temp 0
 push constant 32
 call Output.printChar 1
 pop temp 0
-call List.getNext 0
-pop temp 0
-pop pointer 1
-push temp 0
-pop that 0
+push local 0
+call List.getNext 1
+pop local 0
 goto WHILE_EXP0
 label WHILE_END0
 push constant 0

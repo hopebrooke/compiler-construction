@@ -77,7 +77,7 @@ int Define(char* name, char* type, Kind kind, int index, char args[10][128], cha
             }
         }
         programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].kind = kind;
-        programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].vars = 0;
+        programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].vars = 0; 
         strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].name, name);
         strcpy(programTable[ptCount-1].classTable[programTable[ptCount-1].ctCount].type, type);
         programTable[ptCount-1].ctCount ++;
@@ -107,8 +107,10 @@ int VarCount(Kind kind){
     int count = 0;
     if((kind==0) || (kind==1)){
         for(int i=0; i < programTable[ptCount-1].ctCount; i++) {
-            if(programTable[ptCount-1].classTable[i].kind == kind)
+            if(programTable[ptCount-1].classTable[i].kind == kind){
                 count ++;
+                // printf("%i\n", count);
+            }  
         }
     } else {
         for(int i=0; i < stCount; i++) {
@@ -145,14 +147,14 @@ Kind KindOf(char * name) {
     Kind kind = NONE;
     // First search subroutine table:
     for(int i=0; i<stCount; i++){
-        if(strcmp(subroutineTable[i].name, name)){
+        if(!strcmp(subroutineTable[i].name, name)){
             return subroutineTable[i].kind;
         }
     }
     // If not found in subroutine, repeat for class
     // First search subroutine table:
     for(int i=0; i<programTable[ptCount-1].ctCount; i++){
-        if(strcmp(programTable[ptCount-1].classTable[i].name, name)){
+        if(!strcmp(programTable[ptCount-1].classTable[i].name, name)){
             return programTable[ptCount-1].classTable[i].kind;
         }
     }
@@ -160,6 +162,19 @@ Kind KindOf(char * name) {
     return kind;
 }
 
+Kind WholeScopeKind(char * className, char * name) {
+    Kind kind = NONE;
+    for(int i=0; i<ptCount; i++) {
+        if(!strcmp(programTable[i].name, className)) {
+            for(int j=0; j<programTable[i].ctCount; j++){
+                if(!strcmp(programTable[i].classTable[j].name, name)) {
+                    return programTable[i].classTable[j].kind;
+                }
+            }
+        }
+    }
+    return kind;
+}
 
 // Returns type of named identifier
 char* TypeOf(char* name){

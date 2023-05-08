@@ -1,4 +1,7 @@
 function String.new 0
+push constant 0
+call Memory.alloc 1
+pop pointer 0
 function String.dispose 0
 function String.length 0
 function String.charAt 0

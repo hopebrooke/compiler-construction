@@ -302,7 +302,7 @@ void subroutineDeclar()
 		return;
 	}
 	// Add to symbol table:
-	if ((kind == 2) || (kind == 3) || (compileNum == 0)) {
+	if ((kind == 2) || (kind == 3) ||(compileNum == 0)) { // removed : (kind == 2) || (kind == 3) || from if statement cos why?
 		Define(name, typeSymbol, kind, index, args, argTypes);
 	}
 	char funcName[128] = "";
@@ -323,6 +323,23 @@ void subroutineDeclar()
 		}
 	}
 	writeFunction(funcName, vars);
+
+	if( kind == CONSTRUCTOR) {
+		int objSize = 0;
+		for(int i=0; i<ptCount; i++) {
+			if(!strcmp(currentClass, programTable[i].name)){
+				for( int j=0; j<programTable[i].ctCount; j++){
+					if(programTable[i].classTable[j].kind == FIELD) {
+						objSize ++;
+					}
+				}
+			}
+		}
+
+		writePush(CONST, objSize);
+		writeCall("Memory.alloc", 1);
+		writePop(POINTER, 0);
+	}
 
 	// Start subroutine:
 	startSubroutine();
@@ -639,15 +656,12 @@ void letStatement()
 	}
 	Kind kind;
 	int index;
+	Token one = t;
 	if( t.tp == 1 ){
 		//check if exists:
 		index = IndexOf(t.lx);
 		//Get kind:
 		kind = KindOf(t.lx);
-		// if(!strcmp(currentClass, "Main")) {
-		// 	printf("%s\n", t.lx);
-		// 	printf("%i", KindOf(t.lx));
-		// }
 		if((index == -1) && (compileNum == 0)) {
 			status.er = undecIdentifier;
 			status.tk = t;
@@ -731,10 +745,13 @@ void letStatement()
 		return;
 	}
 
+
 	if(kind == STATIC) {
 		writePop(STAT, index);
 	} else if (kind == FIELD) {
+		// printf("%s: %i\n", one.lx, kind);
 		writePop(THIS, index);
+		// writeCall("What", 1);
 	} else if (kind == ARG) {
 		writePop(ARGU, index);
 	} else if (kind == VAR) {
@@ -1114,6 +1131,22 @@ void subroutineCall()
 		return;
 	}
 	if( (t.tp == 3) && (t.lx[0] == '.')) {
+		// If next is a dot then call first one if it's not a class:
+		int cExists = classExists(one.lx);
+		if (!cExists) {
+			Kind kind = KindOf(one.lx);	
+			int index = IndexOf(one.lx);	
+			if(kind == 0){
+				writePush(STAT, index);
+			} else if (kind == 1) {
+				writePush(THIS, index);
+			} else if (kind == 2) {
+				writePush(ARGU, index);
+			} else if (kind == 3) {
+				writePush(LOC, index);
+			}
+		}
+
 		t = GetNextToken();
 		t = GetNextToken();
 		if( t.tp == 6){
@@ -1183,10 +1216,16 @@ void subroutineCall()
 		strcpy(funcCall, currentClass);
 		strcat(funcCall, ".");
 		strcat(funcCall, firstId);
+		if(WholeScopeKind(currentClass, firstId) == METHOD) {
+			expressions ++;
+		}
 	} else {
 		strcpy(funcCall, one.lx);
 		strcat(funcCall, ".");
 		strcat(funcCall, two.lx);
+		if(WholeScopeKind(one.lx, two.lx) == METHOD) {
+			expressions ++;
+		}
 	}
 	writeCall(funcCall, expressions);
 }
@@ -1458,6 +1497,7 @@ void operand()
 		int expList = 0;
 		int index = IndexOf(t.lx);
 
+
 		strcpy(funcCall, one.lx);
 		// if not there, check class names:
 		if( index == -1) {
@@ -1466,23 +1506,26 @@ void operand()
 				addUndec(one, two, 1);
 			}
 		} 
-		int cExists = classExists(t.lx);
-		if (!cExists) {
-			Kind kind = KindOf(one.lx);	
-			int index = IndexOf(one.lx);	
-			if(kind == 0){
-				writePush(STAT, index);
-			} else if (kind == 1) {
-				writePush(THIS, index);
-			} else if (kind == 2) {
-				writePush(ARGU, index);
-			} else if (kind == 3) {
-				writePush(LOC, index);
-			}
-		}
+
 		//______ . ______
 		t = PeekNextToken();
 		if( (t.tp == 3) && (t.lx[0] == '.')){
+
+			// If next is a dot then call first one if it's not a class:
+			int cExists = classExists(one.lx);
+			if (!cExists) {
+				Kind kind = KindOf(one.lx);	
+				int index = IndexOf(one.lx);	
+				if(kind == 0){
+					writePush(STAT, index);
+				} else if (kind == 1) {
+					writePush(THIS, index);
+				} else if (kind == 2) {
+					writePush(ARGU, index);
+				} else if (kind == 3) {
+					writePush(LOC, index);
+				}
+			}
 			t = GetNextToken();
 			//_______ IDENTIFIER ______
 			t = GetNextToken();
@@ -1545,6 +1588,11 @@ void operand()
 				writePush(LOC, index);
 			}
 		} else if (type == 2) {
+			// Work out the kind of function:
+			Kind kind = WholeScopeKind(currentClass, one.lx);
+			if(kind == METHOD) {
+				expList = expList + 1;
+			}
 			writeCall(funcCall, expList);
 		} else if( type == 1) {
 			// not sure what should happen when it is id.id
@@ -1555,12 +1603,16 @@ void operand()
 				strcpy(funcCall, one.lx);
 			} else {
 				strcpy(funcCall, TypeOf(one.lx));
+				Kind twoKind = WholeScopeKind(TypeOf(one.lx), two.lx);
+				if(twoKind == METHOD) {
+					expList = expList + 1;
+				}
 			}
 			strcat(funcCall, ".");
 			strcat(funcCall, two.lx);
+			
 			writeCall(funcCall, expList);
 		}
-
 		//______ [______
 		if( (t.tp == 3) && (t.lx[0] == '[')){
 			t = GetNextToken();

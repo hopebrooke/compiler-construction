@@ -1,9 +1,8 @@
 function Output.init 0
 function Output.initMap 0
-push local -1
 push constant 127
 call -1.new 1
-pop local 0
+pop static 0
 push constant 0
 push constant 63
 push constant 63
@@ -1351,114 +1350,100 @@ pop temp 0
 push constant 0
 return
 function Output.create 0
-push argument -1
 push constant 11
 call -1.new 1
-pop argument 0
+pop local 0
 push argument 0
-push argument 0
-push argument 0
+push static 0
 add
-push argument 0
-push argument 0
+push local 0
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 0
-push argument 0
+push local 0
 add
-push argument 1
 push argument 1
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 1
-push argument 0
+push local 0
 add
-push argument 2
 push argument 2
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 2
-push argument 0
+push local 0
 add
-push argument 3
 push argument 3
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 3
-push argument 0
+push local 0
 add
-push argument 4
 push argument 4
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 4
-push argument 0
+push local 0
 add
-push argument 5
 push argument 5
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 5
-push argument 0
+push local 0
 add
-push argument 6
 push argument 6
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 6
-push argument 0
+push local 0
 add
-push argument 7
 push argument 7
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 7
-push argument 0
+push local 0
 add
-push argument 8
 push argument 8
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 8
-push argument 0
+push local 0
 add
-push argument 9
 push argument 9
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 9
-push argument 0
+push local 0
 add
-push argument 10
 push argument 10
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
 push constant 10
-push argument 0
+push local 0
 add
-push argument 11
 push argument 11
 pop temp 0
 pop pointer 1
@@ -1467,25 +1452,21 @@ pop that 0
 push constant 0
 return
 function Output.getMap 0
-push static 0
-push static 0
+push argument 0
 push constant 32
 lt
-push static 0
-push static 0
+push argument 0
 push constant 126
 gt
 or
 push constant 0
-pop static 0
+pop argument 0
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
 label IF_FALSE0
-push argument 0
-push argument 0
 push static 0
-push static 0
+push argument 0
 add
 return
 function Output.moveCursor 0

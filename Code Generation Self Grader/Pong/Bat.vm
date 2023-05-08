@@ -1,19 +1,33 @@
 function Bat.new 0
+push constant 5
+call Memory.alloc 1
+pop pointer 0
 push argument 0
-push argument 0
-pop argument -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push argument 1
-push argument 1
-pop argument -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push argument 2
-push argument 2
-pop argument -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push argument 3
-push argument 3
-pop argument -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push constant 2
-pop argument -1
-call Bat.show 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+call Bat.show 1
 pop temp 0
 push pointer 0
 return
@@ -28,7 +42,7 @@ push constant 1
 neg
 call Screen.setColor 1
 pop temp 0
-call Bat.draw 0
+call Bat.draw 1
 pop temp 0
 push constant 0
 return
@@ -36,75 +50,61 @@ function Bat.hide 0
 push constant 0
 call Screen.setColor 1
 pop temp 0
-call Bat.draw 0
+call Bat.draw 1
 pop temp 0
 push constant 0
 return
 function Bat.draw 0
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
 add
-push static -1
-push static -1
-push static -1
-push static -1
 add
 call Screen.drawRectangle 4
 pop temp 0
 push constant 0
 return
 function Bat.setDirection 0
-push static 0
-push static 0
-pop argument -1
+push argument 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 push constant 0
 return
 function Bat.getLeft 0
-push static -1
-push static -1
 return
 function Bat.getRight 0
-push static -1
-push static -1
-push static -1
-push static -1
 add
 return
 function Bat.setWidth 0
-call Bat.hide 0
+call Bat.hide 1
 pop temp 0
-push static 0
-push static 0
-pop argument -1
-call Bat.show 0
+push argument 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+call Bat.show 1
 pop temp 0
 push constant 0
 return
 function Bat.move 0
-push static -1
-push static -1
 push constant 1
 eq
-push static -1
-push static -1
 push constant 4
 sub
-pop static -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
-push static -1
-push static -1
 push constant 0
 lt
 push constant 0
-pop static -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 if-goto IF_TRUE1
 goto IF_FALSE1
 label IF_TRUE1
@@ -112,26 +112,12 @@ label IF_FALSE1
 push constant 0
 call Screen.setColor 1
 pop temp 0
-push static -1
-push static -1
-push static -1
-push static -1
 add
 push constant 1
 add
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
 add
 push constant 4
 add
-push static -1
-push static -1
-push static -1
-push static -1
 add
 call Screen.drawRectangle 4
 pop temp 0
@@ -139,39 +125,27 @@ push constant 1
 neg
 call Screen.setColor 1
 pop temp 0
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
 push constant 3
 add
-push static -1
-push static -1
-push static -1
-push static -1
 add
 call Screen.drawRectangle 4
 pop temp 0
 label IF_FALSE0
-push static -1
-push static -1
 push constant 4
 add
-pop static -1
-push static -1
-push static -1
-push static -1
-push static -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 add
 push constant 511
 gt
 push constant 511
-push static -1
-push static -1
 sub
-pop static -1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 if-goto IF_TRUE2
 goto IF_FALSE2
 label IF_TRUE2
@@ -179,20 +153,10 @@ label IF_FALSE2
 push constant 0
 call Screen.setColor 1
 pop temp 0
-push static -1
-push static -1
 push constant 4
 sub
-push static -1
-push static -1
-push static -1
-push static -1
 push constant 1
 sub
-push static -1
-push static -1
-push static -1
-push static -1
 add
 call Screen.drawRectangle 4
 pop temp 0
@@ -200,24 +164,10 @@ push constant 1
 neg
 call Screen.setColor 1
 pop temp 0
-push static -1
-push static -1
-push static -1
-push static -1
 add
 push constant 3
 sub
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
-push static -1
 add
-push static -1
-push static -1
-push static -1
-push static -1
 add
 call Screen.drawRectangle 4
 pop temp 0
