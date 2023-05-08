@@ -854,11 +854,13 @@ void ifStatement()
 
 	char ifTrue[128] = "IF_TRUE";
 	char ifFalse[128] = "IF_FALSE";
+	char ifEnd[128] = "IF_END";
 
 	char numString[128];
 	sprintf(numString, "%d", ifNum);
 	strcat(ifTrue, numString);
 	strcat(ifFalse, numString);
+	strcat(ifEnd, numString);
 
 	writeIf(ifTrue);
 	writeGoto(ifFalse);
@@ -899,9 +901,14 @@ void ifStatement()
 		return;
 	}
 
-	writeLabel(ifFalse);
-	//______ [ELSE] ______
 	t = PeekNextToken();
+	if(!strcmp(t.lx, "else")){
+		writeGoto(ifEnd);
+	}
+
+	writeLabel(ifFalse);
+
+	//______ [ELSE] ______
 	if( t.tp == 6){
 		status.er = lexerErr;
 		status.tk = t;
@@ -956,6 +963,8 @@ void ifStatement()
 			status.tk = t;
 			return;
 		}
+
+		writeLabel(ifEnd);
 	}
 	
 }
@@ -1159,7 +1168,14 @@ void subroutineCall()
 		int cExists = classExists(one.lx);
 		if (!cExists) {
 			Kind kind = KindOf(one.lx);	
-			int index = IndexOf(one.lx);	
+			int index = IndexOf(one.lx);
+
+			symbol sym = FindSymbol(currentClass, one.lx);
+			if(strcmp(sym.name, " ")) {
+				kind = sym.kind;
+				index = sym.index;
+			}
+	
 			if(kind == 0){
 				writePush(STAT, index);
 			} else if (kind == 1) {
@@ -1185,9 +1201,14 @@ void subroutineCall()
 			two = t;
 			idCount = 1;
 			// If already declared, pass 'type of' one
-			int index = IndexOf(one.lx);
-			if(index != -1) {
-				strcpy(one.lx, TypeOf(one.lx));
+			int cExists = IndexOf(one.lx);
+			if(cExists != -1) {
+				if(!strcmp(TypeOf(one.lx), "-1")){
+					symbol sym = FindSymbol(currentClass, one.lx);
+					strcpy(one.lx, sym.type);
+				} else {
+					strcpy(one.lx, TypeOf(one.lx));
+				}
 			} 
 			if (compileNum == 0){
 				addUndec(one, two, 2);
@@ -1197,6 +1218,12 @@ void subroutineCall()
 			status.er = idExpected;
 			status.tk = t;
 			return;
+		}
+	} else {
+		// if not second one, call local function:
+		if(FindSymbol(currentClass, firstId).kind == METHOD) {
+			// expressions ++;
+			writePush(POINTER, 0);
 		}
 	}
 
@@ -1243,16 +1270,18 @@ void subroutineCall()
 		strcat(funcCall, firstId);
 		if(FindSymbol(currentClass, firstId).kind == METHOD) {
 			expressions ++;
-			writePush(POINTER, 0);
+			// writePush(POINTER, 0);
 		}
 	} else {
+		if(FindSymbol(one.lx, two.lx).kind == METHOD) {
+			expressions ++;
+			//strcpy(one.lx, TypeOf(one.lx));
+			// writePush(POINTER, 0);
+		}
+
 		strcpy(funcCall, one.lx);
 		strcat(funcCall, ".");
 		strcat(funcCall, two.lx);
-		if(FindSymbol(one.lx, two.lx).kind == METHOD) {
-			expressions ++;
-			// writePush(POINTER, 0);
-		}
 	}
 	writeCall(funcCall, expressions);
 }
