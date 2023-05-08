@@ -1465,9 +1465,11 @@ label IF_TRUE0
 push constant 0
 pop argument 0
 label IF_FALSE0
-push static 0
 push argument 0
+push static 0
 add
+pop pointer 1
+push that 0
 return
 function Output.moveCursor 0
 function Output.printChar 0

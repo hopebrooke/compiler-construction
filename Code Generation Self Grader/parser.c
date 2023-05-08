@@ -123,7 +123,7 @@ void classVarDeclar()
 			status.tk = t;
 			return;
 		} else if ((kind == 2) || (kind == 3) || (compileNum == 0)) {
-			char empty[10][128];
+			char empty[50][128];
 			Define(t.lx, typeSymbol, kind, -1, empty, empty);
 		} 
 	}
@@ -153,7 +153,7 @@ void classVarDeclar()
 				status.er = redecIdentifier;
 				status.tk = t;
 			} else if( (kind == 2) || (kind == 3) || (compileNum == 0)) {
-				char empty[10][128];
+				char empty[50][128];
 				Define(t.lx, typeSymbol, kind, -1, empty, empty);
 			}
 		}
@@ -1603,6 +1603,31 @@ void operand()
 				return;
 			}
 		}
+
+		int array = 0;
+		//______ [______
+		if( (t.tp == 3) && (t.lx[0] == '[')){
+			t = GetNextToken();
+			array = 1;
+			//______ EXPRESSION ______
+			expression();
+			if( status.er != 0) return;
+			//______ ] ______
+			t = GetNextToken();
+			if( t.tp == 6){
+				status.er = lexerErr;
+				status.tk = t;
+				return;
+			}
+			if( (t.tp == 3) && (t.lx[0] == ']'));
+			else{
+				status.er = closeBracketExpected;
+				status.tk = t;
+				return;
+			}
+			
+		}
+
 		// TYPE 0: id
 		// TYPE 1: id.id
 		// TYPE 2: id(expList)
@@ -1622,7 +1647,13 @@ void operand()
 			} else if (kind == ARG) {
 				writePush(ARGU, index);
 			} else if (kind == VAR) {
-				writePush(LOC, index);
+				writePush(LOC, index); // 4444
+			}
+
+			if( array ) {
+				writeArithmetic(ADD);
+				writePop(POINTER, 1);
+				writePush(THAT, 0);
 			}
 		} else if (type == 2) {
 			// Work out the kind of function:
@@ -1650,27 +1681,27 @@ void operand()
 			
 			writeCall(funcCall, expList);
 		}
-		//______ [______
-		if( (t.tp == 3) && (t.lx[0] == '[')){
-			t = GetNextToken();
-			//______ EXPRESSION ______
-			expression();
-			if( status.er != 0) return;
-			//______ ] ______
-			t = GetNextToken();
-			if( t.tp == 6){
-				status.er = lexerErr;
-				status.tk = t;
-				return;
-			}
-			if( (t.tp == 3) && (t.lx[0] == ']'));
-			else{
-				status.er = closeBracketExpected;
-				status.tk = t;
-				return;
-			}
-			writeArithmetic(ADD);
-		}
+		// //______ [______
+		// if( (t.tp == 3) && (t.lx[0] == '[')){
+		// 	t = GetNextToken();
+		// 	//______ EXPRESSION ______
+		// 	expression();
+		// 	if( status.er != 0) return;
+		// 	//______ ] ______
+		// 	t = GetNextToken();
+		// 	if( t.tp == 6){
+		// 		status.er = lexerErr;
+		// 		status.tk = t;
+		// 		return;
+		// 	}
+		// 	if( (t.tp == 3) && (t.lx[0] == ']'));
+		// 	else{
+		// 		status.er = closeBracketExpected;
+		// 		status.tk = t;
+		// 		return;
+		// 	}
+		// 	writeArithmetic(ADD);
+		// }
 	}
 
 	//_______ ( ________
