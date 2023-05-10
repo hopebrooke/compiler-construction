@@ -23,9 +23,6 @@ Date Work Commenced: 03/04/2023
 // Need to create list of all identifiers and attributes
 // Must facilitate searching for a symbol in the tables
 // And inserting a symbol into the table
-// char emptyArgs[10][64] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
-// char emptyArgTypes[10][64] = {"0", "0","0", "0","0", "0","0", "0","0", "0"};
-
 
 extern undeclared undeclaredTable[128];
 extern int utCount;
@@ -429,4 +426,3 @@ ParserInfo checkUndec() {
 //     return 1;
 
 // }
-

@@ -276,14 +276,14 @@ int writeReturn() {
 
 
 #ifndef TEST_COMPILER
-// int main ()
-// {
-// 	InitCompiler ();
-// 	ParserInfo p = compile ("Average");
-// 	printf("Token: %s, error: %i, at line: %i\n", p.tk.lx, p.er, p.tk.ln);
+int main ()
+{
+	InitCompiler ();
+	ParserInfo p = compile ("List");
+	// printf("Token: %s, error: %i, at line: %i\n", p.tk.lx, p.er, p.tk.ln);
 	
-// 	// PrintError (p);
-// 	StopCompiler ();
-// 	return 1;
-// }
+	// PrintError (p);
+	StopCompiler ();
+	return 1;
+}
 #endif

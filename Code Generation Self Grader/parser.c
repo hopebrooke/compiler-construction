@@ -1175,7 +1175,6 @@ void subroutineCall()
 				kind = sym.kind;
 				index = sym.index;
 			}
-	
 			if(kind == 0){
 				writePush(STAT, index);
 			} else if (kind == 1) {
@@ -1200,16 +1199,23 @@ void subroutineCall()
 			// add '.identifier' to undeclared for later checking
 			two = t;
 			idCount = 1;
+			// if( compileNum==1 ){
+			// 	printf("%s.%s is of form _._\n", one.lx, two.lx);
+			// }
 			// If already declared, pass 'type of' one
-			int cExists = IndexOf(one.lx);
-			if(cExists != -1) {
+			int exists = IndexOf(one.lx);
+			int cExists = classExists(one.lx);
+			if(exists != -1) {
 				if(!strcmp(TypeOf(one.lx), "-1")){
 					symbol sym = FindSymbol(currentClass, one.lx);
 					strcpy(one.lx, sym.type);
 				} else {
 					strcpy(one.lx, TypeOf(one.lx));
 				}
-			} 
+			} else if ( (compileNum == 1) && (cExists == 0)) {
+				symbol sym = FindSymbol(currentClass, one.lx);
+				strcpy(one.lx, sym.type);
+			}
 			if (compileNum == 0){
 				addUndec(one, two, 2);
 			}
@@ -1282,6 +1288,7 @@ void subroutineCall()
 		strcpy(funcCall, one.lx);
 		strcat(funcCall, ".");
 		strcat(funcCall, two.lx);
+		// printf("%s\n", funcCall);
 	}
 	writeCall(funcCall, expressions);
 }
