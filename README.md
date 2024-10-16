@@ -1,4 +1,3 @@
-# 2932
-Compiler Design and Construction
+# Compiler for the JACK langauge
 
-Lexer, Parser, Symbol Table and Code Generation for the JACK language
+Lexer, Parser, Symbol Table and Code Generation stages.
