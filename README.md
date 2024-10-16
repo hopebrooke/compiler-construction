@@ -1,3 +1,4 @@
-# Compiler for the JACK langauge
+# Compiler Design and Construction
 
-Lexer, Parser, Symbol Table and Code Generation stages for the module Compiler Design and Construction.
+University coursework for the Compiler Design and Construction module.
+A compiler for the JACK language written in C. Includes the lexer, parser, symbol table and code generation stages.
